@@ -1,0 +1,4460 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#171e19" />
+  <meta name="description" content="10K STEPS: trasforma i tuoi fino a 20.000 passi in una scoperta. Trova monumenti, esplora la città e guadagna XP." />
+  <title>10K STEPS — Don't just walk. Discover.</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2216%22%20fill%3D%22%2318221a%22%2F%3E%3Cg%20fill%3D%22%23d9fa72%22%3E%3Crect%20x%3D%2216%22%20y%3D%2235%22%20width%3D%2212%22%20height%3D%229%22%20rx%3D%224.5%22%2F%3E%3Crect%20x%3D%2228%22%20y%3D%2227%22%20width%3D%2212%22%20height%3D%229%22%20rx%3D%224.5%22%2F%3E%3Crect%20x%3D%2240%22%20y%3D%2219%22%20width%3D%2210%22%20height%3D%229%22%20rx%3D%224.5%22%2F%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2239.5%22%20r%3D%223.2%22%20fill%3D%22%23f8f8f2%22%20opacity%3D%22.18%22%2F%3E%3Ccircle%20cx%3D%2228%22%20cy%3D%2231.5%22%20r%3D%223.2%22%20fill%3D%22%23f8f8f2%22%20opacity%3D%22.18%22%2F%3E%3Ccircle%20cx%3D%2240%22%20cy%3D%2223.5%22%20r%3D%223.2%22%20fill%3D%22%23f8f8f2%22%20opacity%3D%22.18%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E" />
+  <link rel="preconnect" href="https://tiles.openfreemap.org" />
+  <link href="https://unpkg.com/maplibre-gl@5.7.3/dist/maplibre-gl.css" rel="stylesheet" />
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+:root{
+  --ink:#18221a;
+  --ink2:#344135;
+  --green:#d9fa72;
+  --paper:#f8f8f2;
+  --canvas:#f1f2e9;
+  --line:#dfe2d7;
+  --muted:#778075;
+  --shadow:0 18px 60px rgba(21,32,19,.16);
+}
+*{
+  box-sizing:border-box;
+}
+html,body{
+  margin:0;
+  min-height:100%;
+  font-family:'DM Sans',sans-serif;
+  color:var(--ink);
+  background:var(--paper);
+}
+button,input,a{
+  font:inherit;
+}
+button{
+  cursor:pointer;
+}
+button:focus-visible,a:focus-visible,input:focus-visible{
+  outline:3px solid #79ad3a;
+  outline-offset:3px;
+}
+button:disabled{
+  cursor:not-allowed;
+  opacity:.5;
+}
+a{
+  text-decoration:none;
+  color:inherit;
+}
+h1,h2,h3,p{
+  margin:0;
+}
+[hidden]{
+  display:none!important;
+}
+.app-shell{
+  height:100dvh;
+  min-height:630px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.topbar{
+  height:76px;
+  flex:0 0 76px;
+  background:#fff;
+  border-bottom:1px solid #e8eae3;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 34px;
+  z-index:1005;
+  position:relative;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-size:24px;
+  letter-spacing:-1.8px;
+  white-space:nowrap;
+}
+.brand-dot{
+  color:#9bc832;
+}
+.brand-icon{
+  position:relative;
+  display:block;
+  width:35px;
+  height:34px;
+  background:var(--ink);
+  border-radius:10px;
+  overflow:hidden;
+  transform:rotate(-6deg);
+}
+.brand-icon span{
+  position:absolute;
+  background:var(--green);
+  width:6px;
+  height:13px;
+  transform:rotate(22deg);
+  border-radius:5px;
+}
+.brand-icon span:nth-child(1){
+  left:10px;
+  top:8px;
+}
+.brand-icon span:nth-child(2){
+  left:19px;
+  top:14px;
+}
+.brand-icon span:nth-child(3){
+  left:17px;
+  top:3px;
+  width:6px;
+  height:6px;
+}
+.brand-icon span:nth-child(4){
+  left:8px;
+  top:24px;
+  width:6px;
+  height:6px;
+}
+.primary-nav{
+  height:100%;
+  display:flex;
+  gap:11px;
+  align-items:center;
+}
+.nav-link{
+  border:0;
+  background:none;
+  color:#7e877e;
+  font-weight:800;
+  font-size:12px;
+  letter-spacing:.01em;
+  padding:13px 22px;
+  border-radius:50px;
+  transition:.18s;
+}
+.nav-link.active{
+  background:#e8f3ca;
+  color:var(--ink);
+}
+.nav-link:hover{
+  background:#f0f2e9;
+}
+.nav-pict{
+  font-size:17px;
+  margin-right:8px;
+  vertical-align:-1px;
+}
+.topbar-right{
+  display:flex;
+  align-items:center;
+  gap:20px;
+}
+.edition-label{
+  font-size:10px;
+  letter-spacing:1.5px;
+  font-weight:800;
+  color:#9aa296;
+  white-space:nowrap;
+}
+.xp-pill{
+  background:var(--ink);
+  color:white;
+  border-radius:40px;
+  font-size:12px;
+  padding:10px 15px;
+  white-space:nowrap;
+  font-weight:700;
+}
+.xp-pill span{
+  color:var(--green);
+  margin-right:6px;
+  font-size:15px;
+}
+.view{
+  flex:1;
+  min-height:0;
+}
+.view-explore{
+  display:none;
+}
+.view-explore.active{
+  display:grid;
+  grid-template-columns:minmax(355px,410px) minmax(0,1fr);
+}
+.sidebar{
+  background:#fff;
+  border-right:1px solid var(--line);
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  z-index:1002;
+}
+.sidebar-content{
+  min-height:0;
+  overflow:auto;
+  scrollbar-color:#d9decf transparent;
+  scrollbar-width:thin;
+  padding:20px 28px 18px;
+}
+.intro{
+  margin-bottom:17px;
+}
+.eyebrow{
+  font-size:10px;
+  letter-spacing:1.6px;
+  font-weight:800;
+  color:#6b906a;
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.eyebrow.dark{
+  color:#698a4c;
+}
+.pulse-dot,.live-dot{
+  display:inline-block;
+  width:7px;
+  height:7px;
+  border-radius:100%;
+  background:#8fce32;
+  box-shadow:0 0 0 4px rgba(133,193,55,.13);
+}
+.intro h1,.alt-heading h1{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  letter-spacing:-2.2px;
+  font-size:clamp(34px,3vw,43px);
+  line-height:1.05;
+  margin:9px 0;
+}
+.intro h1 em,.alt-heading h1 em{
+  font-style:normal;
+  color:#719d3e;
+}
+.intro p{
+  font-size:12.5px;
+  line-height:1.65;
+  color:#7d857b;
+  max-width:330px;
+}
+.goal-card{
+  background:var(--ink);
+  color:white;
+  border-radius:17px;
+  padding:15px 20px 13px;
+  margin-bottom:20px;
+  box-shadow:0 10px 24px rgba(18,34,19,.1);
+}
+.section-mini{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:center;
+  font-size:9px;
+  letter-spacing:1.4px;
+  font-weight:800;
+  color:#c8d2c1;
+}
+.goal-target{
+  color:#c5e68e;
+  border:1px solid #536c43;
+  padding:5px 8px;
+  border-radius:30px;
+  font-size:8px;
+  white-space:nowrap;
+}
+.goal-value{
+  display:flex;
+  align-items:baseline;
+  gap:13px;
+  padding-top:8px;
+  padding-bottom:9px;
+}
+.goal-value>span{
+  font-family:'Space Grotesk',sans-serif;
+  letter-spacing:-2px;
+  font-weight:700;
+  font-size:39px;
+  line-height:1;
+}
+.goal-value small{
+  font-size:12px;
+  letter-spacing:2px;
+  color:var(--green);
+  font-weight:800;
+}
+.goal-card input[type=range]{
+  width:100%;
+  height:5px;
+  margin:12px 0 6px;
+  accent-color:var(--green);
+  cursor:pointer;
+}
+.slider-ends{
+  display:flex;
+  justify-content:space-between;
+  color:#8e9b8c;
+  font-size:9px;
+  font-weight:700;
+}
+.goal-caption{
+  display:flex;
+  justify-content:space-between;
+  padding-top:12px;
+  margin-top:10px;
+  border-top:1px solid #3b483d;
+  color:#d2e6bf;
+  font-size:11px;
+  font-weight:600;
+}
+.start-section{
+  margin-bottom:19px;
+}
+.section-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+.stride-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:10px;
+  color:#aab7a6;
+  font-size:10px;
+  font-weight:700;
+}
+.stride-row select{
+  background:#263429;
+  color:#e1f2d9;
+  border:1px solid #4b644b;
+  border-radius:7px;
+  padding:4px 7px;
+  font-size:10px;
+}
+.section-heading h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:18px;
+  letter-spacing:-.6px;
+  font-weight:700;
+}
+.step-nr{
+  font-size:10px;
+  color:#a8afa3;
+  font-weight:800;
+  letter-spacing:1px;
+}
+.location-field{
+  display:flex;
+  gap:11px;
+  align-items:center;
+  border:1px solid #dfe3d8;
+  background:#fafaf6;
+  border-radius:10px;
+  padding:12px 12px;
+  min-height:47px;
+}
+.location-pin{
+  font-size:21px;
+  color:#759b40;
+  line-height:1;
+}
+.location-field>span:nth-child(2){
+  font-size:12px;
+  font-weight:700;
+  flex:1;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.location-verified{
+  font-size:8px;
+  letter-spacing:.8px;
+  color:#6d8b52;
+  border:1px solid #d7e8ba;
+  border-radius:5px;
+  padding:4px 5px;
+  font-weight:900;
+}
+.location-controls{
+  display:flex;
+  gap:8px;
+  margin-top:9px;
+}
+.location-controls button{
+  border-radius:9px;
+  padding:11px 10px;
+  font-size:10.5px;
+  font-weight:800;
+  flex:1;
+  white-space:nowrap;
+}
+.btn-small-primary{
+  background:var(--green);
+  border:1px solid var(--green);
+  color:var(--ink);
+}
+.btn-small-primary:hover{
+  background:#c4ed59;
+}
+.btn-small-outline{
+  background:white;
+  border:1px solid #d8dfd3;
+  color:var(--ink);
+}
+.btn-small-outline:hover{
+  background:var(--canvas);
+}
+.discover-section{
+  padding-bottom:8px;
+}
+.filter-row{
+  display:flex;
+  overflow:auto;
+  gap:7px;
+  scrollbar-width:none;
+  margin:8px 0 15px;
+}
+.filter-chip{
+  white-space:nowrap;
+  border-radius:25px;
+  border:1px solid #e5e9e0;
+  background:white;
+  font-size:10px;
+  font-weight:800;
+  color:#81907c;
+  padding:8px 11px;
+}
+.filter-chip.active{
+  background:var(--ink);
+  color:white;
+  border-color:var(--ink);
+}
+.list-caption{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  color:#899487;
+  font-size:10px;
+  font-weight:600;
+  margin-bottom:10px;
+}
+.sort-indicator{
+  font-size:9px;
+  letter-spacing:.65px;
+  color:#b1b9ac;
+}
+.poi-list{
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+}
+.poi-card{
+  width:100%;
+  background:white;
+  display:flex;
+  text-align:left;
+  align-items:center;
+  gap:12px;
+  border:1px solid #e3e7de;
+  border-radius:13px;
+  padding:11px;
+  transition:.16s;
+  min-height:79px;
+}
+.poi-card:hover{
+  border-color:#a0bd86;
+  background:#f9fcf3;
+  transform:translateY(-1px);
+}
+.poi-card.selected{
+  border-color:#6e9d3f;
+  background:#eff9df;
+  box-shadow:inset 0 0 0 1px #9fc87a;
+}
+.poi-icon{
+  width:49px;
+  flex:0 0 49px;
+  height:52px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  font-size:24px;
+  color:#445e35;
+  background:#e5efd5;
+}
+.poi-icon.monument{
+  background:#e7e8dd;
+  color:#4e6543;
+}
+.poi-icon.park{
+  background:#e0f0de;
+  color:#32744c;
+}
+.poi-icon.fountain{
+  background:#dcebed;
+  color:#3c7784;
+}
+.poi-text{
+  min-width:0;
+  flex:1;
+}
+.poi-category,.poi-title,.poi-description{
+  display:block;
+}
+.poi-category{
+  font-size:9px;
+  letter-spacing:1px;
+  color:#87a06d;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.poi-title{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:14px;
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  letter-spacing:-.3px;
+  margin-top:4px;
+}
+.poi-description{
+  font-size:10px;
+  color:#899286;
+  margin-top:6px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.poi-gap{
+  display:block;
+  margin-top:6px;
+  font-size:10px;
+  font-weight:700;
+  color:#6d7c68;
+}
+.poi-arrow{
+  display:none;
+}
+.list-empty{
+  padding:24px 12px;
+  border:1px dashed #c8d3c1;
+  border-radius:12px;
+  text-align:center;
+  color:#768777;
+  font-size:12px;
+  line-height:1.6;
+}
+.list-empty strong{
+  display:block;
+  color:var(--ink);
+  margin-bottom:6px;
+}
+.sidebar-footer{
+  border-top:1px solid #e8ece4;
+  padding:14px 27px;
+  display:flex;
+  justify-content:space-between;
+  color:#aeb7aa;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.9px;
+}
+.map-section{
+  position:relative;
+  min-height:0;
+  overflow:hidden;
+  background:#e5e8df;
+}
+.map-section #map{
+  width:100%;
+  height:100%;
+  background:#e4e8dd;
+  z-index:0;
+}
+.map-top-left{
+  position:absolute;
+  top:29px;
+  left:30px;
+  z-index:500;
+  pointer-events:none;
+  background:#fff;
+  padding:17px 20px;
+  border-radius:13px;
+  box-shadow:0 8px 25px #1921191a;
+}
+.map-overline{
+  font-size:10px;
+  letter-spacing:1.3px;
+  font-weight:900;
+  color:#687c5d;
+  display:flex;
+  gap:9px;
+  align-items:center;
+}
+.live-dot{
+  width:6px;
+  height:6px;
+}
+.map-location-name{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-size:20px;
+  letter-spacing:-.8px;
+  margin-top:5px;
+}
+.map-top-right{
+  position:absolute;
+  top:29px;
+  right:25px;
+  z-index:500;
+  display:flex;
+  gap:9px;
+}
+.map-round-btn{
+  border:0;
+  background:white;
+  box-shadow:0 6px 22px #19211924;
+  width:42px;
+  height:42px;
+  border-radius:11px;
+  font-size:24px;
+  color:var(--ink);
+}
+.map-round-btn:hover{
+  background:var(--green);
+}
+.map-bottom{
+  position:absolute;
+  bottom:22px;
+  left:30px;
+  right:65px;
+  z-index:600;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.route-panel:not(.has-selection){
+  display:none;
+}
+.route-panel{
+  background:white;
+  border:1px solid #ebeee5;
+  padding:21px 23px;
+  border-radius:19px;
+  box-shadow:var(--shadow);
+  max-width:740px;
+  width:100%;
+}
+.route-panel-empty{
+  display:flex;
+  gap:16px;
+  align-items:center;
+  min-height:66px;
+}
+.empty-icon{
+  width:50px;
+  height:50px;
+  display:grid;
+  place-items:center;
+  background:var(--green);
+  font-size:27px;
+  border-radius:14px;
+  flex:0 0 50px;
+}
+.route-panel-empty strong{
+  font-family:'Space Grotesk',sans-serif;
+  letter-spacing:-.5px;
+  font-size:17px;
+}
+.route-panel-empty p{
+  color:#899387;
+  font-size:11px;
+  margin-top:7px;
+  line-height:1.5;
+}
+.map-attribution-note{
+  font-size:10px;
+  color:#5a6759;
+  text-shadow:0 1px white;
+  max-width:740px;
+  padding-left:12px;
+}
+.route-heading-row,.route-title-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:9px;
+}
+.route-eyebrow{
+  font-size:10px;
+  letter-spacing:1.15px;
+  font-weight:900;
+  color:#7b9272;
+}
+.route-tag{
+  padding:7px 10px;
+  border-radius:22px;
+  background:#edf5df;
+  color:#668b43;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.3px;
+}
+.route-tag.warn{
+  background:#fff2dd;
+  color:#a46e2e;
+}
+.route-title-row{
+  margin-top:8px;
+}
+.route-title-row h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:26px;
+  letter-spacing:-.9px;
+}
+.route-title-row p{
+  margin-top:4px;
+  font-size:11px;
+  color:#90998f;
+}
+.route-icon{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:#e9f8d5;
+  display:grid;
+  place-items:center;
+  font-size:23px;
+  color:#527a30;
+}
+.route-stats{
+  margin:16px 0;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  border-top:1px solid #e6eae2;
+  border-bottom:1px solid #e6eae2;
+  padding:15px 0;
+}
+.route-stats>div{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  border-right:1px solid #e6eae2;
+  padding-left:17px;
+}
+.route-stats>div:first-child{
+  padding-left:0;
+}
+.route-stats>div:last-child{
+  border:0;
+}
+.route-stats strong{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:25px;
+  letter-spacing:-1px;
+}
+.route-stats span{
+  font-size:9px;
+  font-weight:900;
+  color:#95a091;
+  letter-spacing:.8px;
+}
+.route-warning{
+  font-size:11px;
+  color:#9b6a33;
+  line-height:1.55;
+  margin:0 0 10px;
+}
+.route-actions{
+  display:flex;
+  gap:8px;
+}
+.btn-main{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  background:var(--ink);
+  border:1px solid var(--ink);
+  color:white;
+  border-radius:10px;
+  padding:14px 17px;
+  font-size:12px;
+  font-weight:900;
+}
+.btn-main:hover{
+  background:#344937;
+}
+.btn-main span{
+  font-size:21px;
+  color:var(--green);
+}
+.btn-icon-outline{
+  border:1px solid #dce4d7;
+  background:white;
+  border-radius:10px;
+  padding:10px 15px;
+  font-weight:800;
+  font-size:11px;
+  color:#55654f;
+  white-space:nowrap;
+}
+.btn-icon-outline:hover{
+  background:#edf4e7;
+}
+.walk-progress{
+  position:absolute;
+  z-index:650;
+  top:124px;
+  right:25px;
+  width:280px;
+  background:var(--ink);
+  box-shadow:var(--shadow);
+  color:white;
+  border-radius:17px;
+  padding:20px;
+}
+.walk-progress-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:9px;
+}
+.walk-state{
+  font-size:9px;
+  letter-spacing:.7px;
+  color:var(--green);
+  font-weight:900;
+}
+.walk-progress-top button{
+  background:transparent;
+  border:0;
+  color:#e1e9d8;
+  font-size:11px;
+}
+.walk-value{
+  margin:13px 0;
+  display:flex;
+  align-items:baseline;
+  gap:7px;
+}
+.walk-value strong{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:32px;
+}
+.walk-value span{
+  color:#a7b3a3;
+  font-size:11px;
+}
+.progress-track{
+  height:8px;
+  background:#485547;
+  border-radius:10px;
+  overflow:hidden;
+}
+.progress-track div{
+  height:100%;
+  width:0;
+  background:var(--green);
+  border-radius:10px;
+  transition:width .2s;
+}
+.walk-progress p{
+  font-size:11px;
+  line-height:1.5;
+  color:#bfcbb8;
+  margin-top:11px;
+}
+.pick-mode{
+  cursor:crosshair!important;
+}
+.origin-marker{
+  width:18px;
+  height:18px;
+  border:4px solid white;
+  background:#2f8d51;
+  border-radius:50%;
+  box-shadow:0 0 0 4px #35985744,0 4px 12px #0004;
+}
+.poi-marker{
+  height:34px;
+  width:34px;
+  background:var(--ink);
+  border:2px solid white;
+  color:var(--green);
+  box-shadow:0 3px 12px #0003;
+  border-radius:11px;
+  display:grid;
+  place-items:center;
+  font-size:17px;
+  transition:transform .12s;
+}
+.poi-marker.selected{
+  background:#d9fa72;
+  border-color:#fff;
+  color:#233a23;
+  transform:scale(1.18);
+}
+.alternate-view{
+  overflow:auto;
+  background:#f5f6ee;
+}
+.alt-container{
+  max-width:1100px;
+  margin:0 auto;
+  padding:55px 35px 75px;
+}
+.alt-heading h1{
+  font-size:clamp(44px,5vw,66px);
+  margin:22px 0;
+}
+.alt-heading p{
+  font-size:15px;
+  line-height:1.6;
+  color:#7a8478;
+  max-width:560px;
+}
+.challenge-kpis{
+  margin:42px 0 45px;
+  background:var(--ink);
+  border-radius:20px;
+  padding:28px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+.challenge-kpis>div{
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  padding:0 15px;
+  border-right:1px solid #3e5140;
+}
+.challenge-kpis>div:last-child{
+  border:0;
+}
+.challenge-kpis small{
+  font-weight:900;
+  letter-spacing:1px;
+  font-size:10px;
+  color:#adc4a1;
+}
+.challenge-kpis strong{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:32px;
+  letter-spacing:-1px;
+  color:white;
+}
+.challenge-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:20px 0;
+}
+.challenge-head h2{
+  font-family:'Space Grotesk',sans-serif;
+  letter-spacing:-.8px;
+  font-size:24px;
+}
+.challenge-head>span{
+  font-size:10px;
+  letter-spacing:1px;
+  font-weight:900;
+  color:#abb6a7;
+}
+.badge-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:15px;
+}
+.badge-card{
+  background:white;
+  border:1px solid #e2e8dd;
+  padding:22px;
+  border-radius:16px;
+  min-height:220px;
+  display:flex;
+  flex-direction:column;
+  gap:11px;
+}
+.badge-card.locked{
+  opacity:.67;
+}
+.badge-card .badge-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.badge-emoji{
+  width:61px;
+  height:61px;
+  border-radius:16px;
+  display:grid;
+  place-items:center;
+  background:#e7f1d7;
+  font-size:30px;
+}
+.badge-card.locked .badge-emoji{
+  filter:grayscale(1);
+  background:#f0f0eb;
+}
+.badge-status{
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.9px;
+  background:#e6f6d1;
+  color:#668b36;
+  border-radius:25px;
+  padding:7px 9px;
+}
+.badge-card.locked .badge-status{
+  background:#f4f5f0;
+  color:#a0aaa0;
+}
+.badge-card h3{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:18px;
+}
+.badge-card p{
+  font-size:12px;
+  color:#7d877b;
+  line-height:1.5;
+  flex:1;
+}
+.badge-card>small{
+  font-size:10px;
+  font-weight:900;
+  color:#8caa67;
+}
+.profile-summary{
+  display:flex;
+  align-items:center;
+  gap:22px;
+  background:white;
+  border:1px solid #e3e9df;
+  padding:27px;
+  border-radius:19px;
+  margin:35px 0;
+}
+.avatar-big{
+  flex:0 0 82px;
+  height:82px;
+  background:var(--ink);
+  border-radius:21px;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:26px;
+  font-weight:800;
+  position:relative;
+}
+.avatar-big span{
+  position:absolute;
+  right:9px;
+  top:5px;
+  color:var(--green);
+  font-size:18px;
+}
+.profile-label{
+  color:#7d966c;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1px;
+}
+.profile-summary h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:22px;
+  margin:5px 0;
+}
+.profile-summary p{
+  color:#849082;
+  font-size:12px;
+}
+.profile-xp{
+  margin-left:auto;
+  white-space:nowrap;
+  background:#e9f4d8;
+  border-radius:20px;
+  padding:10px 16px;
+  color:#5c8143;
+  font-weight:800;
+}
+.history-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.history-item{
+  background:white;
+  border:1px solid #e3e9df;
+  border-radius:13px;
+  padding:18px 21px;
+  display:flex;
+  align-items:center;
+  gap:17px;
+}
+.history-item .history-icon{
+  height:45px;
+  width:45px;
+  border-radius:12px;
+  background:#e7f6d8;
+  display:grid;
+  place-items:center;
+  font-size:23px;
+}
+.history-item div:nth-child(2){
+  flex:1;
+}
+.history-item h3{
+  font-size:14px;
+}
+.history-item p{
+  margin-top:5px;
+  color:#899587;
+  font-size:11px;
+}
+.history-item strong{
+  font-size:12px;
+  color:#629243;
+}
+.history-empty{
+  background:white;
+  padding:35px;
+  border:1px dashed #cfdacc;
+  color:#7c8b7a;
+  border-radius:15px;
+  text-align:center;
+  font-size:13px;
+}
+.danger-reset{
+  border:1px solid #e4d4d2;
+  color:#a26c66;
+  background:transparent;
+  border-radius:9px;
+  padding:12px 14px;
+  font-weight:800;
+  font-size:11px;
+  margin-top:35px;
+}
+.privacy-note{
+  color:#a2aea0;
+  font-size:11px;
+  max-width:620px;
+  line-height:1.6;
+  margin-top:12px;
+}
+.toast{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translate(-50%,20px);
+  z-index:4000;
+  border-radius:13px;
+  padding:13px 18px;
+  background:#1c2e22;
+  color:white;
+  font-size:12px;
+  font-weight:600;
+  max-width:min(500px,calc(100% - 30px));
+  line-height:1.5;
+  box-shadow:var(--shadow);
+  opacity:0;
+  pointer-events:none;
+  transition:.22s;
+  text-align:center;
+}
+.toast.show{
+  opacity:1;
+  transform:translate(-50%,0);
+}
+.mobile-nav{
+  display:none;
+}
+@media(max-width:1180px){
+  .edition-label{
+    display:none;
+  }
+  .view-explore.active{
+    grid-template-columns:minmax(325px,370px) minmax(0,1fr);
+  }
+  .sidebar-content{
+    padding:25px 21px;
+  }
+  .route-panel{
+    max-width:600px;
+  }
+  .map-bottom{
+    left:20px;
+    right:45px;
+  }
+  .route-panel{
+    padding:17px 19px;
+  }
+  .map-top-left{
+    left:20px;
+    top:20px;
+  }
+}
+@media(max-width:790px){
+  .app-shell{
+    height:auto;
+    min-height:100dvh;
+    overflow:visible;
+    padding-bottom:62px;
+  }
+  .topbar{
+    height:65px;
+    flex-basis:65px;
+    padding:0 18px;
+    position:sticky;
+    top:0;
+  }
+  .brand{
+    font-size:22px;
+  }
+  .primary-nav,.edition-label{
+    display:none;
+  }
+  .view-explore.active{
+    display:flex;
+    flex-direction:column;
+  }
+  .sidebar{
+    border-right:0;
+  }
+  .sidebar-content{
+    overflow:visible;
+    padding:23px 18px 14px;
+  }
+  .intro{
+    margin-bottom:20px;
+  }
+  .intro h1{
+    font-size:37px;
+  }
+  .goal-card{
+    margin-bottom:22px;
+  }
+  .discover-section{
+    padding-bottom:14px;
+  }
+  .poi-list{
+    display:flex;
+    flex-direction:row;
+    overflow-x:auto;
+    padding-bottom:7px;
+    scroll-snap-type:x mandatory;
+    scrollbar-width:none;
+  }
+  .poi-card{
+    min-width:245px;
+    width:245px;
+    scroll-snap-align:start;
+  }
+  .sidebar-footer{
+    display:none;
+  }
+  .map-section{
+    height:580px;
+    min-height:580px;
+    overflow:hidden;
+  }
+  .map-bottom{
+    left:13px;
+    right:13px;
+    bottom:18px;
+  }
+  .route-panel{
+    max-width:100%;
+    border-radius:16px;
+    padding:16px;
+  }
+  .map-top-left{
+    top:14px;
+    left:14px;
+    padding:11px 14px;
+  }
+  .map-location-name{
+    font-size:15px;
+  }
+  .map-overline{
+    font-size:8px;
+  }
+  .map-top-right{
+    top:14px;
+    right:12px;
+    gap:6px;
+  }
+  .map-round-btn{
+    width:36px;
+    height:36px;
+    font-size:20px;
+  }
+  .walk-progress{
+    top:70px;
+    right:12px;
+    width:min(290px,calc(100% - 24px));
+  }
+  .route-title-row h2{
+    font-size:21px;
+  }
+  .route-stats{
+    padding:10px 0;
+    margin:10px 0;
+  }
+  .route-stats strong{
+    font-size:22px;
+  }
+  .route-stats span{
+    font-size:8px;
+  }
+  .map-attribution-note{
+    font-size:9px;
+  }
+  .mobile-nav{
+    display:flex;
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    height:65px;
+    z-index:1100;
+    background:white;
+    border-top:1px solid #dfe6da;
+    justify-content:space-around;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .mobile-nav button{
+    width:33%;
+    border:0;
+    background:transparent;
+    color:#99a395;
+    font-weight:800;
+    font-size:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    gap:1px;
+  }
+  .mobile-nav button span{
+    font-size:23px;
+  }
+  .mobile-nav button.active{
+    color:#537e36;
+  }
+  .alt-container{
+    padding:30px 18px 70px;
+  }
+  .alt-heading h1{
+    font-size:44px;
+  }
+  .challenge-kpis{
+    margin:28px 0;
+    padding:20px 8px;
+  }
+  .challenge-kpis>div{
+    padding:0 10px;
+  }
+  .challenge-kpis strong{
+    font-size:21px;
+  }
+  .challenge-kpis small{
+    font-size:8px;
+  }
+  .badge-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+  .challenge-head>span{
+    display:none;
+  }
+  .challenge-head h2{
+    font-size:22px;
+  }
+  .profile-summary{
+    gap:13px;
+    padding:17px;
+  }
+  .avatar-big{
+    width:62px;
+    flex-basis:62px;
+    height:62px;
+    font-size:20px;
+  }
+  .profile-summary h2{
+    font-size:16px;
+  }
+  .profile-xp{
+    padding:7px 9px;
+    font-size:10px;
+  }
+  .history-item{
+    padding:13px;
+  }
+}
+@media(max-width:400px){
+  .brand{
+    font-size:20px;
+  }
+  .sidebar-content{
+    padding:20px 13px;
+  }
+  .location-controls button{
+    font-size:9px;
+  }
+  .route-actions{
+    flex-wrap:wrap;
+  }
+  .btn-main{
+    min-width:100%;
+    order:0;
+  }
+  .btn-icon-outline{
+    flex:1;
+  }
+  .route-stats strong{
+    font-size:20px;
+  }
+  .badge-grid{
+    grid-template-columns:1fr;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  *{
+    transition:none!important;
+    scroll-behavior:auto!important;
+  }
+}
+.basemap-alert{
+  position:absolute;
+  z-index:501;
+  left:50%;
+  top:95px;
+  transform:translateX(-50%);
+  width:min(360px,calc(100% - 30px));
+  padding:12px 15px;
+  border:1px solid #efd9ab;
+  border-radius:11px;
+  background:#fff8e9;
+  color:#735219;
+  font:600 12px/1.5 'DM Sans',sans-serif;
+  box-shadow:0 8px 25px #19211916;
+  pointer-events:none;
+}
+.map-failure{
+  margin:110px auto 0;
+  max-width:360px;
+  padding:25px;
+  text-align:center;
+  font:600 14px/1.6 'DM Sans',sans-serif;
+  background:white;
+  border:1px solid #ddd;
+  border-radius:14px;
+}
+.discover-source{
+  font-size:11px;
+  line-height:1.55;
+  color:#7a8b75;
+  margin:0 0 13px;
+  max-width:320px;
+}
+.stride-row{
+  padding-top:5px;
+  color:#d5e3cc;
+  gap:16px;
+}
+.stride-row label{
+  cursor:pointer;
+}
+.stride-control{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:#c7dabb;
+  font-size:11px;
+}
+.stride-control input{
+  width:66px;
+  padding:7px 6px;
+  background:#263429;
+  color:#e1f2d9;
+  border:1px solid #50634f;
+  border-radius:8px;
+  text-align:center;
+  font-weight:700;
+  font-size:12px;
+  font-variant-numeric:tabular-nums;
+  appearance:textfield;
+  -moz-appearance:textfield;
+}
+.stride-control input::-webkit-inner-spin-button,.stride-control input::-webkit-outer-spin-button{
+  -webkit-appearance:none;
+  margin:0;
+}
+.poi-category{
+  font-size:9px;
+  letter-spacing:.55px;
+  color:#7d946f;
+}
+.maplibregl-control-container .maplibregl-ctrl-attrib{
+  font-family:"DM Sans",sans-serif;
+  font-size:10px;
+}
+.maplibregl-ctrl-bottom-left{
+  bottom:0;
+}
+.maplibregl-ctrl-bottom-right{
+  bottom:18px;
+  right:3px;
+}
+.maplibregl-ctrl-group{
+  border-radius:12px!important;
+  overflow:hidden;
+}
+.maplibregl-marker{
+  z-index:5;
+}
+.maplibregl-marker .origin-marker{
+  pointer-events:none;
+}
+.maplibregl-marker:has(.poi-marker){
+  cursor:pointer;
+}
+.maplibregl-popup{
+  font-family:"DM Sans",sans-serif;
+}
+.maplibregl-canvas{
+  outline:0;
+}
+.pick-mode,.pick-mode canvas{
+  cursor:crosshair!important;
+}
+.location-verified{
+  white-space:nowrap;
+}
+.poi-list:empty:before{
+  content:"Le mete verranno mostrate dopo aver scelto la posizione.";
+  font-size:12px;
+  color:#879587;
+}
+.route-heading-row{
+  justify-content:flex-start;
+}
+.route-title-row{
+  margin-top:11px;
+}
+.route-place-info{
+  padding:0 0 13px;
+}
+.route-place-description{
+  color:#657264;
+  font-size:11.5px;
+  line-height:1.6;
+  margin:0 0 7px;
+  overflow-wrap:anywhere;
+}
+.route-place-link{
+  font-size:10.5px;
+  font-weight:800;
+  color:#517c2f;
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+.route-actions .btn-main{
+  justify-content:center;
+}
+#route-panel-loaded{
+  max-height:min(67dvh,560px);
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:#d7dfd0 transparent;
+}
+@media(max-width:790px){
+  #route-panel-loaded{
+    max-height:355px;
+  }
+  .route-place-description{
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:4;
+    line-clamp:4;
+    overflow:hidden;
+  }
+  .route-stats{
+    margin:10px 0;
+  }
+  .route-actions .btn-main{
+    padding:12px 15px;
+  }
+}
+.route-choice{
+  display:flex;
+  gap:5px;
+  background:#f0f3e9;
+  border-radius:10px;
+  padding:4px;
+  margin-top:12px;
+}
+.route-choice-btn{
+  border:0;
+  background:transparent;
+  color:#667660;
+  font-size:11px;
+  font-weight:800;
+  flex:1;
+  border-radius:8px;
+  padding:11px 7px;
+  transition:background .16s;
+  white-space:nowrap;
+}
+.route-choice-btn.active{
+  background:#fff;
+  color:#253e29;
+  box-shadow:0 1px 6px #17271b17;
+}
+.route-choice-btn:not(.active):hover{
+  background:#e5eddb;
+}
+.route-choice-btn.loading{
+  position:relative;
+  padding-right:30px;
+}
+.route-choice-btn.loading::after{
+  content:"";
+  position:absolute;
+  right:12px;
+  top:50%;
+  width:13px;
+  height:13px;
+  margin-top:-6.5px;
+  border-radius:50%;
+  border:2px solid #b8c4b3;
+  border-top-color:#27452f;
+  animation:tenk-spin .8s linear infinite;
+}
+.route-inline-status{
+  display:none;
+  margin-top:9px;
+  font-size:11px;
+  line-height:1.45;
+  color:#61705d;
+}
+.route-inline-status.show{
+  display:block;
+}
+.route-inline-status.warn{
+  color:#935f27;
+}
+@keyframes tenk-spin{
+  to{
+    transform:rotate(360deg);
+  }
+}
+@media(max-width:400px){
+  .route-choice-btn{
+    font-size:10px;
+    padding:10px 5px;
+  }
+}
+.poi-gap{
+  display:block;
+  font-size:10px;
+  color:#568137;
+  font-weight:800;
+  margin-top:5px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.route-title-row{
+  align-items:flex-start;
+}
+.route-name-block{
+  flex:1;
+  min-width:0;
+}
+.route-place-photo{
+  flex:0 0 140px;
+  max-width:140px;
+  margin:0;
+  position:relative;
+  border-radius:12px;
+  overflow:hidden;
+  aspect-ratio:5 / 4;
+  background:#e6eddf;
+  border:1px solid #e5ebdf;
+}
+.route-place-photo img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.route-place-photo figcaption{
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  background:linear-gradient(0deg,#152719b8,transparent);
+  color:#fff;
+  font-size:8px;
+  line-height:1.2;
+  padding:17px 6px 6px;
+  max-height:44px;
+  overflow:hidden;
+}
+.route-place-photo figcaption a{
+  color:white;
+  text-decoration:underline;
+  text-decoration-color:#ffffff78;
+  overflow-wrap:anywhere;
+}
+@media(max-width:790px){
+  .route-place-photo{
+    flex-basis:104px;
+    max-width:104px;
+  }
+  .route-title-row h2{
+    font-size:19px;
+  }
+  .route-place-photo figcaption{
+    font-size:7px;
+  }
+}
+@media(max-width:400px){
+  .route-place-photo{
+    flex-basis:88px;
+    max-width:88px;
+  }
+  .route-title-row h2{
+    font-size:18px;
+  }
+}
+@media(max-width:790px){
+  #map .maplibregl-canvas-container.maplibregl-cooperative-gestures{
+    touch-action:pan-x pan-y;
+  }
+}
+.map-bottom.has-selection{
+  left:0;
+  right:0;
+  bottom:0;
+  gap:0;
+  z-index:850;
+}
+.map-bottom.has-selection .map-attribution-note{
+  display:none;
+}
+.map-bottom.has-selection .route-panel{
+  max-width:none;
+  width:100%;
+  border-radius:23px 23px 0 0;
+  padding:17px 24px 16px;
+  box-shadow:0 -12px 45px rgba(18,36,22,.2);
+  border:1px solid #e5eadf;
+  border-bottom:0;
+}
+.route-sheet-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:10px;
+}
+.route-sheet-close{
+  border:0;
+  background:#f1f3ed;
+  color:#475c45;
+  width:34px;
+  height:34px;
+  flex:0 0 34px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  font-size:25px;
+  line-height:1;
+  transition:background .15s;
+}
+.route-sheet-close:hover{
+  background:#e6efdc;
+}
+.route-panel.has-selection #route-panel-loaded{
+  max-height:min(52dvh,450px);
+  overflow:auto;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+}
+.route-sheet-content{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(280px,0.78fr);
+  grid-template-areas:'title stats' 'info choice' 'info actions';
+  gap:12px 30px;
+  align-items:start;
+}
+.route-sheet-content>.route-title-row{
+  grid-area:title;
+  display:flex;
+  align-items:center;
+  gap:15px;
+  margin:0;
+  min-width:0;
+}
+.route-sheet-content>.route-title-row h2{
+  font-size:clamp(20px,2vw,27px);
+  line-height:1.15;
+  letter-spacing:-.85px;
+  overflow-wrap:anywhere;
+}
+.route-sheet-content>.route-place-info{
+  grid-area:info;
+  max-width:700px;
+  padding:0 5px 0 0;
+}
+.route-sheet-content>.route-stats{
+  grid-area:stats;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  border:0;
+  border-radius:13px;
+  background:#f4f7ee;
+  margin:0;
+  padding:15px 12px;
+}
+.route-sheet-content>.route-stats>div{
+  padding-left:12px;
+}
+.route-sheet-content>.route-stats>div:first-child{
+  padding-left:0;
+}
+.route-sheet-content>.route-stats strong{
+  font-size:clamp(18px,2vw,24px);
+}
+.route-sheet-content>.route-stats span{
+  font-size:8px;
+  letter-spacing:.5px;
+}
+.route-sheet-content>.route-choice{
+  grid-area:choice;
+  margin:0;
+}
+.route-sheet-content>.route-actions{
+  grid-area:actions;
+  margin:0;
+}
+.route-sheet-content>.route-actions .btn-main{
+  padding:12px 16px;
+  text-align:left;
+}
+.route-sheet-content>.route-actions .btn-main span{
+  margin-left:auto;
+}
+.route-sheet-content .route-place-photo{
+  width:176px;
+  max-width:176px;
+  flex:0 0 176px;
+  aspect-ratio:4 / 3;
+  border-radius:14px;
+  order:2;
+}
+.route-sheet-content .route-place-photo img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.route-sheet-content .photo-credit-link{
+  position:absolute;
+  right:6px;
+  bottom:6px;
+  width:25px;
+  height:25px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:rgba(15,31,19,.8);
+  color:#fff;
+  font-size:15px;
+  text-decoration:none;
+  line-height:1;
+  z-index:1;
+}
+.route-sheet-content .photo-credit-link:hover{
+  background:#203e25;
+}
+.route-sheet-content .route-place-description{
+  font-size:12px;
+  line-height:1.55;
+  color:#58675a;
+  margin:0 0 7px;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:4;
+  line-clamp:4;
+  overflow:hidden;
+}
+.route-notice{
+  margin:8px 0 0;
+  font-size:11px;
+  line-height:1.45;
+  color:#935f27;
+}
+.route-sheet-footnote{
+  font-size:9px;
+  color:#94a18f;
+  line-height:1.4;
+  margin:10px 0 0;
+}
+@media(max-width:1000px) and (min-width:791px){
+  .route-sheet-content{
+    grid-template-columns:minmax(0,1fr) minmax(240px,.9fr);
+    column-gap:18px;
+  }
+  .route-sheet-content .route-place-photo{
+    width:144px;
+    flex-basis:144px;
+    max-width:144px;
+  }
+  .map-bottom.has-selection .route-panel{
+    padding:14px 17px;
+  }
+}
+@media(max-width:790px){
+  .map-section{
+    scroll-margin-top:65px;
+  }
+  .map-bottom.has-selection{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:65px;
+    z-index:1080;
+    width:100%;
+    max-width:100%;
+    padding:0;
+  }
+  .map-bottom.has-selection .route-panel{
+    max-width:100%;
+    max-height:min(68dvh,590px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    border-radius:24px 24px 0 0;
+    padding:10px 17px 16px;
+    box-shadow:0 -12px 40px rgba(21,33,20,.24);
+  }
+  .map-bottom.has-selection .route-panel::before{
+    content:'';
+    display:block;
+    width:38px;
+    height:4px;
+    border-radius:4px;
+    background:#d9e0d4;
+    margin:0 auto 11px;
+  }
+  .route-panel.has-selection #route-panel-loaded{
+    max-height:none;
+    overflow:visible;
+  }
+  .route-sheet-top{
+    margin-bottom:12px;
+  }
+  .route-sheet-content{
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    grid-template-areas:'title' 'stats' 'choice' 'info' 'actions';
+    row-gap:12px;
+  }
+  .route-sheet-content>.route-title-row{
+    align-items:center;
+    gap:13px;
+  }
+  .route-sheet-content>.route-title-row h2{
+    font-size:21px;
+    line-height:1.17;
+  }
+  .route-sheet-content .route-place-photo{
+    width:148px;
+    flex-basis:148px;
+    max-width:148px;
+    aspect-ratio:4 / 3;
+    border-radius:12px;
+  }
+  .route-sheet-content>.route-stats{
+    padding:13px 10px;
+    margin:0;
+  }
+  .route-sheet-content>.route-stats strong{
+    font-size:21px;
+  }
+  .route-sheet-content>.route-stats span{
+    font-size:8px;
+  }
+  .route-sheet-content>.route-choice{
+    margin:0;
+  }
+  .route-sheet-content>.route-place-info{
+    padding:0;
+  }
+  .route-sheet-content .route-place-description{
+    -webkit-line-clamp:3;
+    line-clamp:3;
+    font-size:11.5px;
+  }
+  .route-sheet-content>.route-actions{
+    margin:1px 0 0;
+  }
+  .route-sheet-content>.route-actions .btn-main{
+    min-width:0;
+    width:100%;
+    order:0;
+  }
+  .route-sheet-footnote{
+    margin-top:9px;
+  }
+}
+@media(max-width:400px){
+  .map-bottom.has-selection .route-panel{
+    padding:10px 14px 14px;
+  }
+  .route-sheet-content>.route-title-row h2{
+    font-size:19px;
+  }
+  .route-sheet-content .route-place-photo{
+    width:120px;
+    max-width:120px;
+    flex-basis:120px;
+  }
+  .route-sheet-content>.route-stats strong{
+    font-size:19px;
+  }
+}
+@media(max-height:600px) and (max-width:790px){
+  .map-bottom.has-selection .route-panel{
+    max-height:62dvh;
+  }
+}
+.brand-icon{
+  display:none;
+}
+.brand-mark{
+  display:block;
+  width:36px;
+  height:36px;
+  flex:0 0 36px;
+  overflow:visible;
+  filter:drop-shadow(0 2px 3px rgba(21,32,19,.12));
+}
+.route-tag{
+  display:none!important;
+}
+.profile-summary{
+  min-width:0;
+}
+.profile-meta{
+  min-width:0;
+  flex:1;
+}
+.profile-meta h2,.profile-meta p{
+  overflow-wrap:anywhere;
+}
+.avatar-big{
+  isolation:isolate;
+  flex-shrink:0;
+  overflow:visible;
+  line-height:1;
+  letter-spacing:-1.8px;
+}
+.avatar-big .avatar-mark{
+  display:block;
+  position:static;
+  font-size:26px;
+  font-weight:800;
+  color:#fff;
+  letter-spacing:-1.8px;
+  line-height:1;
+  transform:none;
+}
+.avatar-big .avatar-spark{
+  position:absolute;
+  display:grid;
+  place-items:center;
+  top:-9px;
+  right:-9px;
+  width:24px;
+  height:24px;
+  font-size:13px;
+  letter-spacing:0;
+  background:var(--green);
+  color:var(--ink);
+  border:3px solid white;
+  border-radius:50%;
+  line-height:1;
+  transform:none;
+}
+.route-place-photo{
+  background:#dfe9d0;
+  border:1px solid #cbdcbf;
+  box-shadow:0 7px 18px rgba(32,49,22,.12);
+}
+.route-place-photo img{
+  object-position:center;
+  transition:transform .25s ease;
+}
+.route-place-photo:before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,transparent 55%,rgba(24,34,26,.17));
+  z-index:1;
+  pointer-events:none;
+}
+.route-place-photo .photo-credit-link{
+  z-index:2;
+}
+@media(max-width:790px){
+  .profile-summary{
+    display:grid;
+    grid-template-columns:72px minmax(0,1fr);
+    column-gap:17px;
+    row-gap:10px;
+    align-items:center;
+    overflow:visible;
+  }
+  .avatar-big{
+    width:70px;
+    height:70px;
+    min-width:70px;
+    min-height:70px;
+    flex:unset;
+    border-radius:18px;
+    grid-column:1;
+    grid-row:1 / span 2;
+  }
+  .avatar-mark{
+    font-size:24px;
+  }
+  .profile-meta{
+    grid-column:2;
+    grid-row:1;
+    align-self:end;
+  }
+  .profile-meta h2{
+    font-size:clamp(15px,4.2vw,19px);
+    line-height:1.2;
+  }
+  .profile-meta p{
+    font-size:11px;
+    line-height:1.35;
+    margin-top:4px;
+  }
+  .profile-label{
+    font-size:9px;
+  }
+  .profile-xp{
+    grid-column:2;
+    grid-row:2;
+    justify-self:start;
+    align-self:start;
+    margin:0;
+    padding:6px 10px;
+    max-width:100%;
+    font-size:11px;
+  }
+}
+@media(max-width:350px){
+  .profile-summary{
+    grid-template-columns:62px minmax(0,1fr);
+    gap:12px;
+    padding:14px;
+  }
+  .avatar-big{
+    width:60px;
+    height:60px;
+    min-width:60px;
+    min-height:60px;
+  }
+  .avatar-mark{
+    font-size:21px;
+  }
+  .brand-mark{
+    width:33px;
+    height:33px;
+    flex-basis:33px;
+  }
+}
+.map-bottom.has-selection .route-panel{
+  padding:9px 19px 10px;
+}
+.route-sheet-top{
+  margin-bottom:4px;
+  min-height:27px;
+  justify-content:flex-end;
+}
+.route-sheet-close{
+  width:28px;
+  height:28px;
+  flex-basis:28px;
+  font-size:22px;
+}
+.route-sheet-content{
+  column-gap:18px;
+  row-gap:8px;
+}
+.route-sheet-content>.route-stats{
+  padding:9px 10px;
+}
+.route-sheet-content>.route-stats strong{
+  font-size:21px;
+}
+.route-sheet-content>.route-stats span{
+  font-size:7.5px;
+}
+.route-sheet-content>.route-choice{
+  padding:3px;
+}
+.route-choice-btn{
+  padding:8px 7px;
+}
+.route-sheet-content .route-place-description{
+  -webkit-line-clamp:2;
+  line-clamp:2;
+  font-size:11px;
+  line-height:1.42;
+  margin-bottom:4px;
+}
+.route-sheet-content>.route-actions .btn-main{
+  padding:9px 13px;
+}
+.route-sheet-content .route-place-photo{
+  width:205px;
+  max-width:205px;
+  flex:0 0 205px;
+  aspect-ratio:3/2;
+}
+.route-choice-btn.unavailable{
+  color:#935f27;
+  background:#fff4e8;
+}
+.route-choice-btn.unavailable.active{
+  background:#fff0dd;
+  color:#86531b;
+  box-shadow:none;
+}
+.route-choice-btn.unavailable:hover{
+  background:#ffedd6;
+}
+@media(max-width:1000px) and (min-width:791px){
+  .route-sheet-content .route-place-photo{
+    width:168px;
+    max-width:168px;
+    flex-basis:168px;
+  }
+}
+@media(max-width:790px){
+  .map-bottom.has-selection .route-panel{
+    max-height:min(58dvh,490px);
+    padding:7px 15px 10px;
+  }
+  .map-bottom.has-selection .route-panel::before{
+    margin-bottom:5px;
+  }
+  .route-sheet-top{
+    margin-bottom:3px;
+    min-height:26px;
+  }
+  .route-sheet-content{
+    row-gap:7px;
+  }
+  .route-sheet-content>.route-title-row{
+    gap:9px;
+    align-items:center;
+  }
+  .route-sheet-content>.route-title-row h2{
+    font-size:19px;
+    line-height:1.12;
+  }
+  .route-sheet-content .route-place-photo{
+    width:clamp(148px,44vw,192px);
+    max-width:clamp(148px,44vw,192px);
+    flex:0 0 clamp(148px,44vw,192px);
+    aspect-ratio:3/2;
+  }
+  .route-sheet-content>.route-stats{
+    padding:8px 10px;
+  }
+  .route-sheet-content>.route-stats strong{
+    font-size:19px;
+  }
+  .route-sheet-content>.route-stats>div{
+    gap:2px;
+    padding-left:8px;
+  }
+  .route-sheet-content .route-place-description{
+    -webkit-line-clamp:2;
+    line-clamp:2;
+    font-size:10.5px;
+    line-height:1.36;
+  }
+  .route-sheet-content>.route-actions{
+    margin:0;
+  }
+  .route-sheet-content>.route-actions .btn-main{
+    padding:9px 13px;
+    min-height:39px;
+  }
+  .route-sheet-content .route-place-link{
+    font-size:10px;
+  }
+  .route-choice-btn{
+    padding:8px 5px;
+    font-size:10.5px;
+  }
+}
+@media(max-width:400px){
+  .map-bottom.has-selection .route-panel{
+    padding:6px 12px 9px;
+  }
+  .route-sheet-content>.route-title-row h2{
+    font-size:17px;
+  }
+  .route-sheet-content .route-place-photo{
+    width:clamp(135px,42vw,165px);
+    max-width:clamp(135px,42vw,165px);
+    flex-basis:clamp(135px,42vw,165px);
+  }
+  .route-sheet-content>.route-stats strong{
+    font-size:18px;
+  }
+  .route-choice-btn{
+    font-size:10px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .route-choice-btn.loading::after{
+    animation:none;
+    border-top-color:#27452f;
+  }
+}
+.route-sheet-content{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(125px,clamp(145px,19vw,230px)) minmax(215px,1.12fr);
+  grid-template-areas:"story photo journey";
+  align-items:stretch;
+  column-gap:clamp(10px,1.5vw,24px);
+  row-gap:0;
+}
+.route-sheet-content>.route-story{
+  grid-area:story;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  align-self:start;
+}
+.route-story .route-title-row{
+  display:block;
+  margin:0;
+  min-width:0;
+}
+.route-story .route-name-block{
+  min-width:0;
+}
+.route-story h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  letter-spacing:-.7px;
+  font-size:clamp(18px,1.65vw,26px);
+  line-height:1.16;
+  overflow-wrap:anywhere;
+}
+.route-story .route-place-info{
+  padding:0;
+  min-width:0;
+}
+.route-story .route-place-description{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:6;
+  line-clamp:6;
+  overflow:hidden;
+  font-size:11.5px;
+  line-height:1.5;
+  margin:0 0 8px;
+}
+.route-story .route-place-link{
+  display:inline-block;
+  max-width:100%;
+  font-size:10.5px;
+}
+.route-story .route-place-link[hidden]{
+  display:none;
+}
+.route-sheet-content>.route-place-photo{
+  grid-area:photo;
+  display:block;
+  width:100%;
+  max-width:none;
+  min-width:0;
+  height:100%;
+  max-height:245px;
+  min-height:165px;
+  aspect-ratio:4/3;
+  align-self:stretch;
+  justify-self:stretch;
+  margin:0;
+  border-radius:14px;
+  overflow:hidden;
+}
+.route-sheet-content>.route-place-photo img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.route-sheet-content>.route-journey{
+  grid-area:journey;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  align-self:start;
+}
+.route-journey .route-stats{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  border:0;
+  border-radius:13px;
+  background:#f4f7ee;
+  margin:0;
+  padding:10px 8px;
+}
+.route-journey .route-stats>div{
+  padding-left:9px;
+  gap:4px;
+}
+.route-journey .route-stats>div:first-child{
+  padding-left:0;
+}
+.route-journey .route-stats strong{
+  font-size:clamp(16px,1.7vw,23px);
+  line-height:1.15;
+}
+.route-journey .route-stats span{
+  font-size:7.5px;
+  letter-spacing:.4px;
+}
+.route-journey .route-choice{
+  margin:0;
+  padding:3px;
+  min-width:0;
+}
+.route-journey .route-choice-btn{
+  padding:8px 5px;
+  min-width:0;
+  font-size:10px;
+}
+.route-journey .route-actions{
+  margin:0;
+  display:block;
+}
+.route-journey .route-actions .btn-main{
+  min-width:0;
+  width:100%;
+  padding:10px 12px;
+  text-align:left;
+}
+.route-journey .route-actions .btn-main span{
+  margin-left:auto;
+}
+@media(min-width:791px) and (max-width:1120px){
+  .route-sheet-content{
+    grid-template-columns:minmax(0,1fr) minmax(120px,33%);
+    grid-template-areas:"story photo" "journey journey";
+    row-gap:12px;
+    column-gap:15px;
+  }
+  .route-sheet-content>.route-place-photo{
+    min-height:136px;
+    height:160px;
+    max-height:165px;
+  }
+  .route-sheet-content>.route-journey{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    grid-template-areas:"stats stats" "choice actions";
+    align-items:center;
+    gap:8px;
+  }
+  .route-journey>.route-stats{
+    grid-area:stats;
+  }
+  .route-journey>.route-choice{
+    grid-area:choice;
+  }
+  .route-journey>.route-actions{
+    grid-area:actions;
+  }
+  .route-story .route-place-description{
+    -webkit-line-clamp:4;
+    line-clamp:4;
+  }
+}
+@media(max-width:790px){
+  .route-sheet-content{
+    grid-template-columns:minmax(0,1fr) clamp(118px,38vw,175px);
+    grid-template-areas:"story photo" "journey journey";
+    column-gap:12px;
+    row-gap:11px;
+    align-items:start;
+  }
+  .route-sheet-content>.route-story{
+    gap:6px;
+  }
+  .route-story h2{
+    font-size:clamp(17px,4.8vw,22px);
+    line-height:1.14;
+  }
+  .route-story .route-place-description{
+    -webkit-line-clamp:4;
+    line-clamp:4;
+    font-size:10.8px;
+    line-height:1.38;
+    margin-bottom:5px;
+  }
+  .route-sheet-content>.route-place-photo{
+    width:100%;
+    height:146px;
+    min-height:146px;
+    max-height:146px;
+    aspect-ratio:unset;
+  }
+  .route-sheet-content>.route-journey{
+    gap:8px;
+  }
+  .route-journey .route-stats{
+    padding:9px 10px;
+  }
+  .route-journey .route-stats strong{
+    font-size:20px;
+  }
+  .route-journey .route-choice-btn{
+    padding:8px 6px;
+    font-size:10.5px;
+  }
+  .route-journey .route-actions .btn-main{
+    min-width:0;
+    width:100%;
+    min-height:40px;
+    padding:9px 12px;
+  }
+}
+@media(max-width:370px){
+  .route-sheet-content{
+    grid-template-columns:minmax(0,1fr) 116px;
+    column-gap:10px;
+    row-gap:9px;
+  }
+  .route-sheet-content>.route-place-photo{
+    height:128px;
+    min-height:128px;
+    max-height:128px;
+  }
+  .route-story h2{
+    font-size:16px;
+  }
+  .route-story .route-place-description{
+    -webkit-line-clamp:3;
+    line-clamp:3;
+    font-size:10px;
+  }
+  .route-journey .route-stats strong{
+    font-size:18px;
+  }
+}
+.map-top-left{
+  width:260px;
+  max-width:calc(100% - 120px);
+  padding:14px 16px;
+}
+.map-location-name{
+  font-size:17px;
+  line-height:1.23;
+  letter-spacing:-.55px;
+  overflow-wrap:anywhere;
+}
+.map-status-detail{
+  font-size:11px;
+  line-height:1.45;
+  color:#7b877b;
+  margin-top:6px;
+  overflow-wrap:anywhere;
+}
+.map-top-left.is-busy .live-dot{
+  width:11px;
+  height:11px;
+  flex:0 0 11px;
+  background:transparent;
+  box-shadow:none;
+  border:2px solid #c8d6c0;
+  border-top-color:#4e813e;
+  animation:tenk-spin .85s linear infinite;
+}
+.map-top-left.is-error .live-dot{
+  background:#d98a49;
+  box-shadow:0 0 0 4px rgba(217,138,73,.15);
+}
+.route-choice-btn.loading{
+  position:relative;
+  padding-right:27px;
+}
+.route-choice-btn.loading::after{
+  right:8px;
+  width:12px;
+  height:12px;
+  margin-top:-6px;
+}
+@media(max-width:790px){
+  .map-top-left{
+    top:14px;
+    left:14px;
+    width:215px;
+    max-width:calc(100% - 115px);
+    padding:11px 12px;
+  }
+  .map-location-name{
+    font-size:14px;
+    line-height:1.2;
+  }
+  .map-overline{
+    line-height:1.35;
+  }
+  .map-status-detail{
+    font-size:10px;
+    margin-top:5px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .map-top-left.is-busy .live-dot,.route-choice-btn.loading::after{
+    animation-duration:2s;
+  }
+}
+
+/* Collapsible settings stay inside Profile. */
+.advanced-settings{border:1px solid #dfe5d9;background:#fafcf7;border-radius:13px;margin:-7px 0 20px;overflow:hidden}
+.advanced-settings>summary{cursor:pointer;list-style:none;padding:12px 14px;font-weight:800;font-size:12px;display:flex;align-items:center;gap:9px;color:#465c43}
+.advanced-settings>summary::-webkit-details-marker{display:none}
+.advanced-settings>summary::after{content:'+';margin-left:auto;color:#73866a;font-size:17px;font-weight:500}
+.advanced-settings[open]>summary::after{content:'−'}
+.advanced-inner{padding:0 14px 14px}
+.advanced-intro{font-size:11px;color:#687869;line-height:1.5;margin:3px 0 13px}
+.advanced-group{border:0;border-top:1px solid #dfe7da;padding:11px 0 0;margin:0 0 10px;min-width:0}
+.advanced-group summary{cursor:pointer;list-style:none;font-size:11px;font-weight:900;letter-spacing:.4px;color:#527043;padding:7px 0 9px}.advanced-group summary::-webkit-details-marker{display:none}.advanced-group summary::before{content:"▸";display:inline-block;margin-right:8px}.advanced-group[open] summary::before{content:"▾"}.advanced-group summary span{font-size:9px;font-weight:600;color:#849284}
+.advanced-field{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:8px;align-items:center;margin:10px 0}
+.advanced-label{font-size:11px;line-height:1.3;font-weight:700;color:#3e5040}
+.advanced-note{display:block;font-size:9px;line-height:1.35;margin-top:3px;color:#849284;font-weight:500}
+.advanced-field input{width:100%;min-width:0;border-radius:8px;border:1px solid #d1dbc9;background:white;padding:8px 7px;text-align:right;font-size:12px;font-weight:700;color:#1d3021}
+.advanced-actions{display:flex;gap:8px;margin-top:14px}
+.advanced-actions button{flex:1;min-width:0;border-radius:9px;padding:10px;font-size:11px;font-weight:800}
+.advanced-error{font-size:11px;color:#b44a33;margin:8px 0;line-height:1.4}
+@media(max-width:790px){
+ .map-bottom.has-selection{position:fixed!important;left:0!important;right:0!important;bottom:65px!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;transform:none!important;box-sizing:border-box;display:block}
+ .map-bottom.has-selection .route-panel{display:block;width:100%!important;max-width:none!important;margin:0!important;box-sizing:border-box;border-radius:22px 22px 0 0}
+ .map-bottom.has-selection #route-panel-loaded{width:100%;min-width:0}
+ .map-bottom.has-selection .route-sheet-content{width:100%;min-width:0}
+ .start-section,.start-section .location-field,.start-section .location-controls{width:100%;max-width:none}
+}
+
+.profile-container /* Collapsible settings stay inside Profile. */
+.advanced-settings{margin:28px 0 8px;max-width:100%}
+
+/* MapLibre cooperative gestures keep native single-finger page scrolling enabled. */
+@media(max-width:790px){
+  /* The sheet is portaled to body, so its width is the viewport width. */
+  body>.map-bottom.has-selection{
+    position:fixed!important;
+    inset-inline:0!important;
+    bottom:65px!important;
+    display:block!important;
+    width:100vw!important;
+    max-width:100vw!important;
+    padding:0!important;
+    margin:0!important;
+    box-sizing:border-box!important;
+    z-index:1080;
+  }
+  body>.map-bottom.has-selection .route-panel{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0;
+    margin:0!important;
+    border-radius:22px 22px 0 0;
+    box-sizing:border-box;
+  }
+  /* Allow controls to shrink within narrow mobile viewports. */
+  .view-explore.active,.sidebar,.sidebar-content,.start-section{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+  }
+  .location-controls button{
+    min-width:0;
+    flex:1 1 0;
+    white-space:normal;
+    line-height:1.25;
+  }
+  /* Full-width departure field without horizontal overflow. */
+  .start-section .location-field{
+    width:100vw;
+    max-width:100vw;
+    margin-left:calc(-1 * var(--departure-gutter, 18px));
+    margin-right:0;
+    border-radius:0;
+    padding-inline:var(--departure-gutter, 18px);
+  }
+  .sidebar-content{--departure-gutter:18px}
+}
+@media(max-width:400px){
+  .sidebar-content{--departure-gutter:13px}
+}
+  
+/* Mobile discovery: full-width cards and empty states. */
+@media(max-width:790px){
+  .discover-section{width:100%;max-width:100%;min-width:0}
+  .discover-section .poi-list{
+    display:flex;
+    flex-direction:column;
+    width:100vw;
+    max-width:100vw;
+    min-width:0;
+    margin-left:calc(-1 * var(--departure-gutter, 18px));
+    margin-right:0;
+    padding:0 0 10px;
+    gap:8px;
+    overflow:visible;
+    scroll-snap-type:none;
+    box-sizing:border-box;
+  }
+  .discover-section .poi-list>.list-empty,
+  .discover-section .poi-list>.poi-card{
+    display:flex;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    flex:0 0 auto;
+    box-sizing:border-box;
+    margin:0;
+    border-radius:0;
+    scroll-snap-align:none;
+  }
+  .discover-section .poi-list>.list-empty{
+    flex-direction:column;
+    justify-content:center;
+    padding:23px var(--departure-gutter, 18px);
+    border-inline:0;
+  }
+  .discover-section .poi-list>.poi-card{
+    padding:13px var(--departure-gutter, 18px);
+    border-inline:0;
+  }
+}
+</style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#explore" aria-label="10K Steps, homepage">
+        <svg class="brand-mark" viewBox="0 0 44 44" role="img" aria-label="Logo 10K STEPS" xmlns="http://www.w3.org/2000/svg">
+  <rect x="1" y="1" width="42" height="42" rx="13" fill="#18221a"/>
+  <rect x="9" y="26" width="10" height="8" rx="4" fill="#d9fa72"/>
+  <rect x="18" y="20" width="10" height="8" rx="4" fill="#d9fa72"/>
+  <rect x="27" y="14" width="10" height="8" rx="4" fill="#d9fa72"/>
+</svg>
+        <span>10K<span class="brand-spacer"> </span>STEPS<span class="brand-dot">.</span></span>
+      </a>
+      <nav class="primary-nav" aria-label="Navigazione principale">
+        <button class="nav-link active" data-view="explore" type="button"><span class="nav-pict">⌁</span> Esplora</button>
+        <button class="nav-link" data-view="challenges" type="button"><span class="nav-pict">✦</span> Sfide</button>
+        <button class="nav-link" data-view="profile" type="button"><span class="nav-pict">◉</span> Profilo</button>
+      </nav>
+      <div class="topbar-right"><span class="edition-label">YOUR CITY, YOUR ADVENTURE</span><span class="xp-pill"><span>✳</span><b id="top-xp">0</b> XP</span></div>
+    </header>
+
+    <!-- Explore: goal, origin and destinations. -->
+    <main id="view-explore" class="view view-explore active">
+      <aside class="sidebar">
+        <div class="sidebar-content">
+          <div class="intro">
+            <h1>Ogni passo<br />una <em>scoperta.</em></h1>
+            <p>Una meta da raggiungere. Una città da vivere. Sempre un buon motivo per camminare.</p>
+          </div>
+
+          <section class="goal-card" aria-label="Obiettivo di passi">
+            <div class="section-mini"><span>IL TUO OBIETTIVO</span><span class="goal-target">◎ DAILY QUEST</span></div>
+            <div class="goal-value"><span id="goal-output">10.000</span><small>PASSI</small></div>
+            <input aria-label="Obiettivo di passi, da 1.000 a 20.000" id="goal-slider" type="range" min="1000" max="20000" step="500" value="10000" />
+            <div class="stride-row"><label for="stride-input">Lunghezza del passo</label><span class="stride-control"><input id="stride-input" type="number" min="40" max="120" step="1" value="75" inputmode="numeric" aria-label="Lunghezza del passo in centimetri" /><span>cm</span></span></div>
+            <div class="goal-caption"><span id="goal-km">≈ 7,5 km totali</span><span id="goal-time">≈ 90 min</span></div>
+          </section>
+
+
+          <section class="start-section" aria-label="Punto di partenza">
+            <div class="section-heading"><h2>Da dove partiamo?</h2></div>
+            <div class="location-field"><span class="location-pin">⌖</span><span id="origin-label">Scegli una posizione</span><span class="location-verified" id="origin-status">DA IMPOSTARE</span></div>
+            <div class="location-controls">
+              <button class="btn-small-primary" type="button" id="geolocate-btn">◎ Usa la mia posizione</button>
+              <button class="btn-small-outline" type="button" id="pick-location-btn">⌖ Scegli sulla mappa</button>
+            </div>
+          </section>
+
+          <section class="discover-section">
+            <div class="section-heading"><h2>Scegli la tua meta</h2></div>
+            <p class="discover-source">Mete ordinate per passi di andata e ritorno sulla rete pedonale. Il tracciato completo si apre selezionando la meta.</p>
+            <div class="list-caption"><span id="poi-count">Ricerca automatica delle mete</span><span class="sort-indicator">SCARTO PASSI A/R</span></div>
+            <div class="poi-list" id="poi-list" aria-live="polite"></div>
+          </section>
+        </div>
+        <div class="sidebar-footer"><span>✳ 10K STEPS</span><span>MADE FOR EXPLORERS</span></div>
+      </aside>
+
+      <section class="map-section" aria-label="Mappa e itinerario">
+        <div id="map" role="application" aria-label="Mappa interattiva dei percorsi"></div>
+        <div class="map-top-left" id="map-progress" role="status" aria-live="polite" aria-atomic="true">
+          <div class="map-overline"><span class="live-dot" aria-hidden="true"></span><span id="map-status">IN ATTESA</span></div>
+          <div class="map-location-name" id="map-city-name">Scegli la partenza</div>
+          <div class="map-status-detail" id="map-status-detail">Usa il GPS oppure scegli un punto sulla mappa.</div>
+        </div>
+        <div class="map-top-right">
+          <button type="button" class="map-round-btn" id="map-reset-btn" title="Centra la mappa" aria-label="Centra la mappa">⌖</button>
+          <button type="button" class="map-round-btn" id="map-refresh-btn" title="Aggiorna luoghi" aria-label="Aggiorna luoghi">↻</button>
+        </div>
+        <div class="map-bottom">
+          <div class="route-panel" id="route-panel">
+            <div id="route-panel-loaded" hidden>
+              <div class="route-sheet-top">
+                <span class="route-tag" id="route-match" role="status" aria-hidden="true"></span>
+                <button type="button" id="close-route-panel" class="route-sheet-close" aria-label="Chiudi i dettagli e torna alla mappa" title="Chiudi dettagli">×</button>
+              </div>
+              <div class="route-sheet-content">
+                <div class="route-story">
+                  <div class="route-title-row">
+                    <div class="route-name-block">
+                      <h2 id="route-title">—</h2>
+                      <p id="route-notice" class="route-notice" hidden></p>
+                    </div>
+                  </div>
+                  <div class="route-place-info">
+                    <p class="route-place-description" id="route-place-description">Informazioni sul luogo…</p>
+                    <a class="route-place-link" id="route-place-link" target="_blank" rel="noopener noreferrer" hidden>Leggi su Wikipedia ↗</a>
+                  </div>
+                </div>
+                <figure class="route-place-photo" id="route-place-photo" hidden>
+                  <img id="route-place-image" alt="" decoding="async" loading="eager" referrerpolicy="no-referrer" />
+                  <a id="route-photo-credit" class="photo-credit-link" target="_blank" rel="noopener noreferrer" aria-label="Crediti e licenza della fotografia" title="Crediti e licenza della fotografia">ⓘ</a>
+                </figure>
+                <div class="route-journey">
+                  <div class="route-stats">
+                    <div><strong id="route-steps">—</strong><span>PASSI STIMATI</span></div>
+                    <div><strong id="route-distance">—</strong><span>CHILOMETRI</span></div>
+                    <div><strong id="route-duration">—</strong><span>MINUTI</span></div>
+                  </div>
+                  <div class="route-choice" role="group" aria-label="Tipo di percorso">
+                    <button id="mode-roundtrip" type="button" class="route-choice-btn active" aria-pressed="true">↔ Andata e ritorno</button>
+                    <button id="mode-loop" type="button" class="route-choice-btn" aria-pressed="false">◯ Circolare</button>
+                  </div>
+                  <div class="route-actions">
+                    <button class="btn-main" type="button" id="start-walk-btn">Avvia camminata <span aria-hidden="true">↗</span></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="walk-progress" id="walk-progress" hidden>
+          <div class="walk-progress-top"><span class="walk-state" id="walk-mode">● CAMMINATA IN CORSO</span><button type="button" id="stop-walk-btn">Termina ×</button></div>
+          <div class="walk-value"><strong id="walk-steps">0</strong><span> / <span id="walk-goal">10.000</span> passi</span></div>
+          <div class="progress-track"><div id="walk-bar"></div></div>
+          <p id="walk-message">Seguire l'itinerario e tornare al punto di partenza.</p>
+        </div>
+      </section>
+    </main>
+
+    <main id="view-challenges" class="view alternate-view" hidden>
+      <div class="alt-container"><div class="alt-heading"><span class="eyebrow dark">YOUR NEXT CHALLENGE</span><h1>La città è un<br /><em>gioco da vivere.</em></h1><p>Completa missioni, scopri nuovi posti e sblocca traguardi un passo alla volta.</p></div>
+        <div class="challenge-kpis"><div><small>ESPERIENZA TOTALE</small><strong id="challenge-xp">0 XP</strong></div><div><small>ESPLORAZIONI</small><strong id="challenge-walks">0</strong></div><div><small>METRI PERCORSI</small><strong id="challenge-meters">0 m</strong></div></div>
+        <div class="challenge-head"><h2>Badge da conquistare</h2></div><div class="badge-grid" id="badge-grid"></div>
+      </div>
+    </main>
+
+    <!-- Profile: progress and advanced configuration. -->
+    <main id="view-profile" class="view alternate-view" hidden>
+      <div class="alt-container profile-container"><div class="alt-heading"><span class="eyebrow dark">YOUR WALKING STORY</span><h1>Il mondo si scopre<br /><em>camminando.</em></h1><p>Tutte le tue avventure, i tuoi traguardi e le scoperte fatte lungo il percorso.</p></div>
+      <div class="profile-summary"><div class="avatar-big" aria-label="10K STEPS"><span class="avatar-mark">10K</span><span class="avatar-spark" aria-hidden="true">✳</span></div><div class="profile-meta"><span class="profile-label">ESPLORATORE URBANO</span><h2 id="profile-level">Livello 1 · Esordiente</h2><p id="profile-hint">Inizia la tua prima avventura per guadagnare XP.</p></div><span class="profile-xp" id="profile-xp">0 XP</span></div>
+      <div class="challenge-head"><h2>Diario delle esplorazioni</h2><span>SALVATO SU QUESTO DISPOSITIVO</span></div><div id="history-list" class="history-list"></div>
+      <details class="advanced-settings" id="advanced-settings">
+            <summary><span aria-hidden="true">⚙</span> Impostazioni avanzate</summary>
+            <div class="advanced-inner">
+              <p class="advanced-intro">Regola le soglie dell’algoritmo. I valori iniziali riproducono il comportamento precedente. Modifiche e ripristino sono salvati su questo dispositivo.</p>
+              <form id="advanced-form" novalidate>
+                <div id="advanced-fields"></div>
+                <p class="advanced-error" id="advanced-error" role="alert" hidden></p>
+                <div class="advanced-actions">
+                  <button type="submit" class="btn-small-primary">Applica</button>
+                  <button type="button" class="btn-small-outline" id="advanced-reset">Ripristina</button>
+                </div>
+              </form>
+            </div>
+          </details>
+      <button class="danger-reset" type="button" id="reset-profile-btn">Azzera progressi locali</button><p class="privacy-note">I tuoi progressi vengono salvati esclusivamente in questo browser. Il GPS viene elaborato localmente e non viene salvata la cronologia dei tuoi spostamenti.</p>
+      </div>
+    </main>
+
+    <nav class="mobile-nav" aria-label="Navigazione mobile"><button class="active" data-view="explore" type="button"><span>⌁</span>Esplora</button><button data-view="challenges" type="button"><span>✦</span>Sfide</button><button data-view="profile" type="button"><span>◉</span>Profilo</button></nav>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="https://unpkg.com/maplibre-gl@5.7.3/dist/maplibre-gl.js"></script>
+  <script>
+const BASEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+const BASEMAP_ATTRIBUTION = '© OpenStreetMap contributors · OpenFreeMap';
+(() => {
+    'use strict';
+    // Shared utilities and runtime settings.
+    const $ = id => document.getElementById(id);
+    const fmt = n => Math.round(n).toLocaleString('it-IT', { useGrouping: 'always' });
+    const kmText = n => n.toLocaleString('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    const escapeHTML = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const ICONS = { monument: '♜', fountain: '≋', park: '♣' };
+    const CAT = { monument: 'Monumento', fountain: 'Fontana', park: 'Parco' };
+    const STORAGE_KEY = 'tenksteps.progress.v1';
+    const STRIDE_KEY = 'tenksteps.stride.v1';
+    function loadStride() { try {
+        const v = Number(localStorage.getItem(STRIDE_KEY));
+        if (Number.isFinite(v) && v >= 40 && v <= 120)
+            return v;
+    }
+    catch { } return 75; }
+
+    const ADVANCED_KEY = 'tenksteps.advanced.v1';
+    const SPEED_DEFAULT_MIGRATION_KEY = 'tenksteps.speed-default.v2.9';
+    // Single schema drives defaults, validation, storage and form fields.
+    const field = (id, label, note, def, min, max, step) => ({ id, label, note, def, min, max, step });
+    const ADVANCED_GROUPS = [
+      {label:'Obiettivo e scelta delle mete',fields:[
+        field('matchTolerancePct','Scarto massimo dai passi','% rispetto all’obiettivo',20,1,100,1),
+        field('walkingSpeedKmh','Velocità media a piedi','Velocità per stimare il tempo obiettivo (km/h)',5,2,8,0.1),
+        field('maxVisible','Numero massimo di mete','Risultati visibili (fino a 64)',64,1,64,1),
+        field('maxCandidates','Candidati da analizzare','Limite preliminare per la matrice',180,20,250,10),
+        field('shortlistRoutes','Itinerari da verificare','Tracce reali dopo la matrice',80,10,120,5),
+        field('geoBands','Fasce di distanza','Campionamento dei candidati',6,2,12,1),
+        field('minPoiMeters','Distanza minima da partenza','Per ignorare luoghi troppo vicini (m)',120,10,1000,10),
+        field('searchBufferMeters','Margine di ricerca','Distanza aggiunta al raggio (m)',1300,0,5000,100),
+        field('searchSlackPct','Margine geografico','Tolleranza attorno al raggio di ricerca (%)',7,0,30,1),
+        field('poiCacheMinutes','Durata cache delle mete','Minuti prima di ricalcolare (0 = nessuna cache)',25,0,120,1),
+        field('searchMinMeters','Raggio minimo','Ricerca Wikipedia (m)',1100,100,9000,100),
+        field('searchMaxMeters','Raggio massimo','Ricerca Wikipedia (m)',9900,1000,10000,100),
+        field('duplicateMeters','Distanza di deduplicazione','Unisce luoghi con lo stesso nome (m)',220,0,1000,10),
+        field('wikiRingFactorPct','Ampiezza ricerche esterne','Raggio attorno ai punti periferici (%)',86,20,160,1),
+        field('wikiNearMinPct','Zona utile minima','Frazione della distanza desiderata (%)',17,0,80,1),
+        field('wikiNearMaxPct','Zona utile massima','Frazione della distanza desiderata (%)',58,10,100,1),
+        field('wikiEnglishThreshold','Soglia ricerca in inglese','Se i luoghi vicini sono meno di…',4,0,20,1),
+        field('wikiEnglishStop','Stop ricerca in inglese','Al raggiungimento di questo numero',6,1,30,1),
+        field('wikiBaseMinMeters','Raggio base minimo','Raggio iniziale GeoSearch (m)',650,100,5000,50),
+        field('wikiBaseMaxMeters','Raggio base massimo','Raggio iniziale GeoSearch (m)',8500,1000,10000,100),
+        field('wikiBaseExtraMeters','Estensione raggio base','Metri aggiunti al raggio iniziale',550,0,2500,50),
+        field('wikiSmallTargetKm','Soglia ricerca ravvicinata','Distanza andata per usare 2 direzioni (km)',0.7,0.1,3,0.1),
+        field('wikiSmallDirections','Direzioni ricerca ravvicinata','Punti disposti attorno alla partenza',2,1,4,1),
+        field('wikiRingDirections','Direzioni ricerca esterna','Punti di ricerca attorno alla partenza',4,2,8,1),
+        field('wikiRingParallel','Richieste Wikipedia parallele','Massimo 2 per rispettare il servizio pubblico',2,1,2,1),
+        field('wikiEnglishDirections','Direzioni Wikipedia inglese','Punti aggiuntivi per la ricerca alternativa',4,1,8,1),
+        field('wikiEnglishAngleDeg','Rotazione ricerca inglese','Gradi rispetto alla ricerca italiana',45,0,180,5),
+        field('wikiBaseResultLimit','Risultati ricerca iniziale','Massimo pagine Wikipedia per richiesta',100,10,100,5),
+        field('wikiRingResultLimit','Risultati ricerca esterna','Massimo pagine per richiesta',85,10,100,5),
+        field('wikiEnglishResultLimit','Risultati ricerca inglese','Massimo pagine per richiesta',65,10,100,5),
+        field('wikiRingMinMeters','Raggio esterno minimo','Minimo delle ricerche periferiche (m)',550,100,4000,50),
+        field('wikiRingMaxMeters','Raggio esterno massimo','Massimo delle ricerche periferiche (m)',5200,1000,10000,100),
+        field('wikiMergeLimit','Limite luoghi aggregati','Massimo prima della preselezione',430,50,600,10)
+      ]},
+      {label:'Prestazioni e servizi',fields:[
+        field('matrixBatchSize','Mete per batch matrice','Numero di destinazioni per richiesta Valhalla',20,5,30,1),
+        field('matrixConcurrency','Batch matrice paralleli','Numero di richieste contemporanee',3,1,3,1),
+        field('routeConcurrency','Percorsi paralleli','Richieste di verifica contemporanee',3,1,3,1),
+        field('fallbackRoutes','Percorsi senza matrice','Numero massimo di verifiche alternative',20,1,60,1),
+        field('fallbackConcurrency','Verifiche alternative parallele','Numero di richieste contemporanee',2,1,2,1),
+        field('progressEvery','Aggiornamento elenco','Aggiorna dopo questo numero di percorsi',5,1,20,1),
+        field('wikiTimeoutMs','Timeout Wikipedia','Millisecondi',11000,3000,30000,1000),
+        field('matrixTimeoutMs','Timeout matrice pedonale','Millisecondi',18000,5000,45000,1000),
+        field('routeTimeoutMs','Timeout routing','Millisecondi',22000,5000,45000,1000),
+        field('commonsTimeoutMs','Timeout crediti fotografici','Millisecondi',7500,3000,30000,500),
+        field('wikiExcerptChars','Lunghezza descrizione','Caratteri richiesti a Wikipedia',650,150,1200,50),
+        field('wikiPhotoWidth','Larghezza immagine','Pixel richiesti a Wikipedia',960,320,1280,40)
+      ]},
+      {label:'Percorso circolare',fields:[
+        field('maxOverlapPct','Sovrapposizione massima','Quota ammessa di ritorno ripetuto (%)',42,0,100,1),
+        field('overlapWeight','Peso sovrapposizione','Coefficiente della funzione punteggio',0.17,0,2,0.01),
+        field('loopAttempts','Tentativi di anello','Numero di waypoint provati (1–6)',6,1,6,1),
+        field('loopOffsetPct','Offset laterale','Percentuale della distanza partenza–meta',34,5,100,1),
+        field('loopMinOffsetKm','Offset laterale minimo','Chilometri',0.20,0.05,3,0.05),
+        field('loopMaxOffsetKm','Offset laterale massimo','Chilometri',1.30,0.10,5,0.05),
+        field('loopEarlyPointPct','Waypoint anticipato','Posizione lungo la direttrice (%)',35,10,49,1),
+        field('loopMiddlePointPct','Waypoint centrale','Posizione lungo la direttrice (%)',50,40,60,1),
+        field('loopLatePointPct','Waypoint avanzato','Posizione lungo la direttrice (%)',65,51,90,1),
+        field('loopInnerFactor','Offset interno','Moltiplicatore della distanza laterale',0.65,0.1,2,0.05),
+        field('loopOuterFactor','Offset esterno','Moltiplicatore della distanza laterale',1.30,0.2,3,0.05),
+        field('loopEarlyDistancePct','Arresto anticipato: passi','Errore massimo per interrompere (%)',3.5,0,30,0.5),
+        field('loopEarlyOverlapPct','Arresto anticipato: ripetizione','Sovrapposizione per interrompere (%)',20,0,80,1),
+        field('sampleMeters','Campionamento percorso','Metri fra i punti di confronto',24,5,100,1),
+        field('overlapGridMeters','Griglia sovrapposizione','Dimensione della cella (m)',22,5,100,1),
+        field('endpointIgnoreMeters','Esclusione agli estremi','Metri ignorati vicino a partenza/meta',90,0,400,5)
+      ]},
+      {label:'GPS e progressi',fields:[
+        field('tapMaxMovementPx','Tolleranza tap sulla mappa','Movimento massimo del dito (px)',12,2,30,1),
+        field('tapMaxDurationMs','Durata massima tap','Millisecondi',700,200,1500,50),
+        field('locateTimeoutMs','Timeout posizione iniziale','Millisecondi',15000,3000,30000,1000),
+        field('locateMaxAgeMs','Età massima posizione iniziale','Millisecondi',60000,0,120000,5000),
+        field('watchTimeoutMs','Timeout GPS in camminata','Millisecondi',20000,3000,30000,1000),
+        field('watchMaxAgeMs','Età massima GPS in camminata','Millisecondi',3000,0,20000,1000),
+        field('gpsMaxAccuracyMeters','Precisione GPS massima','Scarta letture meno precise (m)',65,5,150,5),
+        field('gpsMinSegmentMeters','Segmento GPS minimo','Ignora spostamenti inferiori (m)',7,1,50,1),
+        field('gpsMaxSegmentMeters','Segmento GPS massimo','Ignora salti GPS superiori (m)',160,20,500,10),
+        field('visitRadiusMeters','Raggio visita della meta','Distanza GPS per segnare una visita (m)',130,20,500,10),
+        field('returnRadiusMeters','Raggio ritorno alla partenza','Distanza GPS per completare (m)',130,20,500,10),
+        field('completionGoalPct','Soglia completamento passi','Percentuale minima dell’obiettivo',75,20,100,5),
+        field('earnedXp','XP per esplorazione','Punti esperienza assegnati',100,0,500,10),
+        field('levelXp','XP per livello','Esperienza necessaria al livello seguente',500,100,5000,100),
+        field('historyLimit','Storico massimo','Esplorazioni conservate',100,10,500,10),
+        field('badgeUrbanCount','Badge luoghi diversi','Numero di luoghi per Urban Explorer',5,1,50,1),
+        field('badgeTotalSteps','Badge passi cumulati','Soglia passi per 100K Club',100000,10000,500000,10000),
+        field('badgeStreakDays','Badge giorni consecutivi','Giorni per Streak',7,2,60,1),
+        field('badgeFountainCount','Badge fontane','Numero di fontane diverse',3,1,50,1),
+        field('badgeTotalKm','Badge chilometri','Distanza cumulata (km)',50,1,500,1)
+      ]}
+    ];
+    const ADVANCED_DEFS = Object.fromEntries(ADVANCED_GROUPS.flatMap(group => group.fields.map(def => [def.id, def])));
+    function defaultsAdvanced(){return Object.fromEntries(Object.entries(ADVANCED_DEFS).map(([id,s])=>[id,s.def]));}
+    function loadAdvanced(){
+      const result=defaultsAdvanced();
+      try{
+        const saved=JSON.parse(localStorage.getItem(ADVANCED_KEY));
+        if(saved && typeof saved==='object')for(const [id,def] of Object.entries(ADVANCED_DEFS)){
+          const v=Number(saved[id]);
+          if(saved[id]!==null && saved[id]!==undefined && Number.isFinite(v) && v>=def.min && v<=def.max)result[id]=v;
+        }
+        // Migrate the former 4.5 km/h default once; preserve future custom choices.
+        if(!localStorage.getItem(SPEED_DEFAULT_MIGRATION_KEY)){
+          if(saved && typeof saved==='object' && Number(saved.walkingSpeedKmh)===4.5){
+            result.walkingSpeedKmh=5;
+            localStorage.setItem(ADVANCED_KEY,JSON.stringify({...saved,walkingSpeedKmh:5}));
+          }
+          localStorage.setItem(SPEED_DEFAULT_MIGRATION_KEY,'1');
+        }
+        validateAdvancedRelations(result);
+      }catch{return defaultsAdvanced();}
+      return result;
+    }
+    // Reject conflicting settings before applying them.
+    function validateAdvancedRelations(value){
+      if(value.searchMinMeters>value.searchMaxMeters)throw Error('Il raggio minimo non può superare quello massimo.');
+      if(value.wikiBaseMinMeters>value.wikiBaseMaxMeters)throw Error('Il raggio Wikipedia minimo supera il massimo.');
+      if(value.wikiRingMinMeters>value.wikiRingMaxMeters)throw Error('Il raggio esterno minimo supera il massimo.');
+      if(value.loopMinOffsetKm>value.loopMaxOffsetKm)throw Error('L’offset laterale minimo supera il massimo.');
+      if(value.wikiNearMinPct>=value.wikiNearMaxPct)throw Error('La zona utile minima deve essere inferiore alla massima.');
+      if(value.loopEarlyPointPct>=value.loopLatePointPct)throw Error('Il waypoint anticipato deve precedere quello avanzato.');
+      if(value.gpsMinSegmentMeters>=value.gpsMaxSegmentMeters)throw Error('Il segmento GPS minimo deve essere inferiore al massimo.');
+    }
+    let settings=loadAdvanced();
+    function renderAdvancedFields(){
+      $('advanced-fields').innerHTML=ADVANCED_GROUPS.map(group=>
+        `<details class="advanced-group"><summary>${group.label} <span>(${group.fields.length})</span></summary>`+
+        group.fields.map(({id,label,note,min,max,step}) =>
+          `<label class="advanced-field"><span class="advanced-label">${label}<span class="advanced-note">${note}</span></span>`+
+          `<input name="${id}" type="number" min="${min}" max="${max}" step="${step}" value="${settings[id]}" inputmode="decimal" required></label>`).join('')+
+        `</details>`).join('');
+    }
+    function applyAdvanced(next){
+      settings=next;
+      try{localStorage.setItem(ADVANCED_KEY,JSON.stringify(settings));}catch{}
+      renderGoal();
+      loopCache.clear();poiCache.clear();
+      if(poiController)poiController.abort();
+      cancelSelectionRoute();
+      state.selected=null;state.route=null;state.routeError='';infoSerial++;
+      renderPois();renderMap();renderRoutePanel();renderRouteLayer(false);
+      if(state.origin)fetchPOIs({force:true});
+      renderProfile();renderBadges();
+      toast('Impostazioni avanzate aggiornate.');
+    }
+    function readAdvancedForm(){
+      const next={};
+      for(const [id,schema] of Object.entries(ADVANCED_DEFS)){
+        const input=$('advanced-form').elements.namedItem(id);
+        const n=Number(input.value);
+        if(!input.value.trim() || !Number.isFinite(n) || n<schema.min || n>schema.max)
+          throw Error(`${schema.label}: inserisci un valore tra ${schema.min} e ${schema.max}.`);
+        const steps=(n-schema.min)/schema.step;
+        if(Math.abs(steps-Math.round(steps))>1e-6)
+          throw Error(`${schema.label}: usa incrementi di ${schema.step}.`);
+        next[id]=n;
+      }
+      validateAdvancedRelations(next);
+      return next;
+    }
+    const poiCacheTtlMs = () => settings.poiCacheMinutes * 60 * 1000;
+    const poiCache = new Map();
+    const DEF_PROFILE = { xp: 0, history: [] };
+    const haversine = (a, b) => { let r = Math.PI / 180, d1 = (b.lat - a.lat) * r, d2 = (b.lon - a.lon) * r, q = Math.sin(d1 / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(d2 / 2) ** 2; return 6371 * 2 * Math.asin(Math.sqrt(q)); };
+    const stepCount = km => Math.round(km * 1000 / (state.stride / 100));
+    let state = { origin: null, originLabel: 'Scegli una posizione', source: null, goal: 10000, stride: loadStride(), pois: [], poiLoading: false, poiError: false, poiErrorMessage: '', poiSearchRadius: 0, poiPhase: 'idle', poiProgress: { done: 0, total: 0 }, locating: false, selected: null, route: null, routeMode: 'roundtrip', routeError: '', picking: false, walk: null, view: 'explore', profile: loadProfile() };
+    let map, originMarker, routeReady = false, toastTimer, poiController = null, selectionRouteController = null, routeSerial = 0, infoSerial = 0;
+    const poiMarkers = new Map();
+    const routeCache = new Map();
+    const loopCache = new Map();
+    const ROUTING_API = 'https://valhalla1.openstreetmap.de';
+    const articleCache = new Map();
+    const photoCreditCache = new Map();
+    function loadProfile() { try {
+        const o = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (o && Number.isFinite(o.xp) && Array.isArray(o.history))
+            return o;
+    }
+    catch { } return { ...DEF_PROFILE }; }
+    function saveProfile() { try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.profile));
+    }
+    catch {
+        toast('Il browser non consente il salvataggio locale.');
+    } }
+    function toast(message) { $('toast').textContent = message; $('toast').classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('show'), 4200); }
+    function mapAlert(message) {
+        let el = $('basemap-alert');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'basemap-alert';
+            el.className = 'basemap-alert';
+            $('map').parentElement.appendChild(el);
+        }
+        el.textContent = message;
+    }
+    // Initialize the map and register non-blocking origin selection.
+    function initMap() {
+        if (typeof maplibregl === 'undefined') {
+            mapAlert('La libreria cartografica non è stata caricata. Controlla la connessione e aggiorna la pagina.');
+            return;
+        }
+        try {
+            map = new maplibregl.Map({ container: 'map', style: BASEMAP_STYLE_URL, center: [12, 43], zoom: 4.2, minZoom: 2, maxZoom: 19, attributionControl: false, cooperativeGestures: window.matchMedia('(max-width: 790px), (pointer: coarse)').matches });
+            map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+            map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: BASEMAP_ATTRIBUTION }), 'bottom-left');
+            map.on('load', () => { routeReady = true; $('basemap-alert')?.remove(); ensureRouteLayer(); renderMap(); });
+            map.on('error', err => { console.warn('MapLibre:', err.error || err); if (!map.loaded())
+                mapAlert('La cartografia è temporaneamente non disponibile. Controlla la rete e aggiorna la pagina.'); });
+            map.on('click', e => {
+                if (!state.picking) return;
+                commitPickedOrigin({lat:e.lngLat.lat,lon:e.lngLat.lng});
+            });
+            initOriginTapSelection();
+        }
+        catch (err) {
+            console.error('Map initialization failed', err);
+            map = null;
+            mapAlert('Impossibile inizializzare la mappa. È necessario un browser con supporto WebGL.');
+        }
+    }
+    // Recognize a short touch without intercepting scrolling or two-finger map gestures.
+    function initOriginTapSelection() {
+        const container = map.getContainer();
+        let tap = null;
+        container.addEventListener('pointerdown', event => {
+            if (!state.picking || event.pointerType !== 'touch') return;
+            // A second pointer cancels the selection; MapLibre can handle multi-touch.
+            if (!event.isPrimary || tap) { tap = null; return; }
+            tap = { id: event.pointerId, x: event.clientX, y: event.clientY, at: performance.now() };
+        }, { passive: true });
+        container.addEventListener('pointermove', event => {
+            if (tap && event.pointerId === tap.id &&
+                Math.hypot(event.clientX - tap.x, event.clientY - tap.y) > settings.tapMaxMovementPx) tap = null;
+        }, { passive: true });
+        container.addEventListener('pointerup', event => {
+            if (!tap || event.pointerId !== tap.id || !state.picking) return;
+            const start = tap;
+            tap = null;
+            if (performance.now() - start.at > settings.tapMaxDurationMs ||
+                Math.hypot(event.clientX - start.x, event.clientY - start.y) > settings.tapMaxMovementPx) return;
+            const rect = container.getBoundingClientRect();
+            if (event.clientX < rect.left || event.clientX > rect.right ||
+                event.clientY < rect.top || event.clientY > rect.bottom) return;
+            const location = map.unproject([event.clientX - rect.left, event.clientY - rect.top]);
+            commitPickedOrigin({ lat: location.lat, lon: location.lng });
+        }, { passive: true });
+        container.addEventListener('pointercancel', () => { tap = null; }, { passive: true });
+        container.addEventListener('keydown', event => {
+            if (!state.picking || !['Enter', ' '].includes(event.key)) return;
+            event.preventDefault();
+            const rect = container.getBoundingClientRect();
+            const location = map.unproject([rect.width / 2, rect.height / 2]);
+            commitPickedOrigin({ lat: location.lat, lon: location.lng });
+        });
+        // Native gestures stay enabled; no transparent overlay or pointer capture is used.
+    }
+
+    function ensureRouteLayer() {
+        if (!map || !map.isStyleLoaded())
+            return;
+        if (!map.getSource('tenk-route')) {
+            map.addSource('tenk-route', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } } });
+            lastRenderedRouteCoordinates = null;
+        }
+        if (!map.getLayer('tenk-route-halo'))
+            map.addLayer({ id: 'tenk-route-halo', type: 'line', source: 'tenk-route', paint: { 'line-color': '#ffffff', 'line-width': 10, 'line-opacity': .93 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
+        if (!map.getLayer('tenk-route-main'))
+            map.addLayer({ id: 'tenk-route-main', type: 'line', source: 'tenk-route', paint: { 'line-color': '#30563a', 'line-width': 6, 'line-opacity': .97 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
+    }
+    function createMapPin(html, lon, lat, handler, tooltip) {
+        const el = document.createElement('div');
+        el.innerHTML = html;
+        if (tooltip) {
+            el.title = tooltip;
+            el.setAttribute('aria-label', tooltip);
+        }
+        if (handler) {
+            el.style.cursor = 'pointer';
+            el.addEventListener('click', ev => { ev.stopPropagation(); if (!state.picking) handler(); });
+        }
+        return new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lon, lat]).addTo(map);
+    }
+    function pinHTML(p, selected) { return `<div class="poi-marker ${selected ? 'selected' : ''}">${ICONS[p.type] || '✦'}</div>`; }
+    // Reconcile markers instead of rebuilding every marker after each update.
+    function renderMap() {
+        if (!map) return;
+        if (!state.origin) {
+            originMarker?.remove();
+            originMarker = null;
+        } else if (!originMarker) {
+            originMarker = createMapPin('<div class="origin-marker"></div>', state.origin.lon, state.origin.lat, null, 'Punto di partenza');
+        } else {
+            originMarker.setLngLat([state.origin.lon, state.origin.lat]);
+        }
+        const visible = state.origin ? visiblePois() : [];
+        const active = new Set(visible.map(p => p.id));
+        for (const [id, marker] of poiMarkers) {
+            if (!active.has(id)) { marker.remove(); poiMarkers.delete(id); }
+        }
+        for (const p of visible) {
+            const selected = state.selected?.id === p.id;
+            let marker = poiMarkers.get(p.id);
+            if (!marker) {
+                marker = createMapPin(pinHTML(p, selected), p.lon, p.lat, () => selectPoi(p.id), p.name);
+                poiMarkers.set(p.id, marker);
+            } else {
+                marker.setLngLat([p.lon, p.lat]);
+                marker.getElement().querySelector('.poi-marker')?.classList.toggle('selected', selected);
+            }
+        }
+        renderRouteLayer(false);
+    }
+    function renderRouteLayer(fit = true) {
+        if (!map || !map.isStyleLoaded())
+            return;
+        ensureRouteLayer();
+        const ll = state.route?.coords || [];
+        map.getSource('tenk-route').setData({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: ll.map(([lat, lon]) => [lon, lat]) } });
+        if (fit && ll.length >= 2) {
+            const bounds = ll.reduce((b, [lat, lon]) => b.extend([lon, lat]), new maplibregl.LngLatBounds([ll[0][1], ll[0][0]], [ll[0][1], ll[0][0]]));
+            const wide = window.matchMedia('(min-width: 791px)').matches;
+            const panelHeight = wide ? document.querySelector('.route-panel.has-selection')?.getBoundingClientRect().height || 0 : 0;
+            map.fitBounds(bounds, { padding: { top: 70, bottom: wide ? Math.min(410, Math.max(225, panelHeight + 28)) : 225, left: 60, right: 60 }, maxZoom: 15, duration: 500 });
+        }
+    }
+    // Render search progress, routes and destination details.
+    function renderMapStatus() {
+        const panel = $('map-progress'), heading = $('map-status'), title = $('map-city-name'), detail = $('map-status-detail');
+        if (!panel)
+            return;
+        let stage = 'ready', overline = 'PRONTO', main = '', sub = '';
+        if (state.locating) {
+            stage = 'busy';
+            overline = 'LOCALIZZAZIONE';
+            main = 'Cerco la tua posizione';
+            sub = 'Attendo il segnale GPS…';
+        }
+        else if (state.picking) {
+            stage = 'ready';
+            overline = 'SCELTA PARTENZA';
+            main = 'Tocca un punto';
+            sub = 'Seleziona la partenza direttamente sulla mappa.';
+        }
+        else if (!state.origin) {
+            stage = 'ready';
+            overline = 'IN ATTESA';
+            main = 'Scegli la partenza';
+            sub = 'Usa il GPS oppure scegli un punto sulla mappa.';
+        }
+        else if (state.selected) {
+            const poi = state.selected;
+            const loop = state.routeMode === 'loop';
+            const working = !state.route && !state.routeError && !!selectionRouteController;
+            if (working) {
+                stage = 'busy';
+                overline = loop ? 'CALCOLO CIRCOLARE' : 'CALCOLO PERCORSO';
+                main = loop ? 'Cerco un anello pedonale' : 'Traccio il percorso';
+                sub = loop ? 'Verifico strade alternative per il ritorno.' : poi.name;
+            }
+            else if (state.routeError) {
+                stage = 'error';
+                overline = loop ? 'ANELLO NON DISPONIBILE' : 'PERCORSO NON DISPONIBILE';
+                main = loop ? 'Nessun anello adatto' : 'Calcolo non riuscito';
+                sub = loop ? 'Prova un’altra meta o andata e ritorno.' : 'Seleziona di nuovo la meta per riprovare.';
+            }
+            else if (state.route) {
+                overline = loop ? 'ANELLO CALCOLATO' : 'PERCORSO PRONTO';
+                main = poi.name;
+                sub = `${fmt(stepCount(state.route.km))} passi · ${kmText(state.route.km)} km ${loop ? 'circolari' : 'A/R'}`;
+            }
+            else {
+                stage = 'busy';
+                overline = 'APRO LA META';
+                main = poi.name;
+                sub = 'Preparo i dettagli del percorso…';
+            }
+        }
+        else if (state.poiLoading) {
+            stage = 'busy';
+            if (state.poiPhase === 'search') {
+                overline = 'RICERCA ATTRAZIONI';
+                main = 'Cerco luoghi da esplorare';
+                sub = 'Consulto Wikipedia GeoSearch…';
+            }
+            else if (state.poiPhase === 'matrix') {
+                overline = 'DISTANZE PEDONALI';
+                main = 'Valuto le mete';
+                sub = 'Calcolo le distanze sulla rete pedonale…';
+            }
+            else {
+                overline = 'VERIFICA ITINERARI';
+                main = 'Controllo i percorsi';
+                const { done, total } = state.poiProgress;
+                const found = visiblePois().length;
+                sub = total ? `${Math.min(done, total)} di ${total} verificati · ${found} mete compatibili` : 'Verifico i tracciati pedonali…';
+            }
+        }
+        else if (state.poiError) {
+            stage = 'error';
+            overline = 'SERVIZIO NON DISPONIBILE';
+            main = 'Ricerca non riuscita';
+            sub = 'Premi ↻ per riprovare.';
+        }
+        else {
+            const n = visiblePois().length;
+            overline = n ? 'RICERCA COMPLETATA' : 'NESSUNA META ADATTA';
+            main = n ? `${n} ${n === 1 ? 'meta disponibile' : 'mete disponibili'}` : 'Nessun percorso vicino';
+            sub = n ? `Itinerari pedonali ordinati per ${fmt(state.goal)} passi A/R.` : 'Prova a cambiare l’obiettivo di passi.';
+        }
+        heading.textContent = overline;
+        title.textContent = main;
+        detail.textContent = sub;
+        panel.classList.toggle('is-busy', stage === 'busy');
+        panel.classList.toggle('is-error', stage === 'error');
+    }
+    function renderLocation() {
+        $('origin-label').textContent = state.originLabel;
+        $('origin-status').textContent = state.source === 'gps' ? 'GPS' : state.source === 'manual' ? 'SELEZIONATA' : 'DA IMPOSTARE';
+        renderMapStatus();
+    }
+    function renderGoal() {
+        $('goal-output').textContent = fmt(state.goal);
+        $('goal-slider').value = state.goal;
+        $('stride-input').value = state.stride;
+        $('goal-km').textContent = `≈ ${kmText(state.goal * state.stride / 100000)} km totali`;
+        $('goal-time').textContent = `≈ ${Math.round(state.goal * state.stride / 100000 / settings.walkingSpeedKmh * 60)} min`;
+    }
+    function verifiedSteps(p) { return p.walkRoute ? stepCount(p.walkRoute.km) : null; }
+    function directDeviationSteps(p) { return Math.abs(verifiedSteps(p) - state.goal); }
+    function visiblePois() {
+        if (!state.origin)
+            return [];
+        return state.pois.filter(p => p.walkRoute && directDeviationSteps(p) <= state.goal * (settings.matchTolerancePct/100))
+            .sort((a, b) => directDeviationSteps(a) - directDeviationSteps(b)
+            || verifiedSteps(a) - verifiedSteps(b) || a.name.localeCompare(b.name, 'it'))
+            .slice(0, settings.maxVisible);
+    }
+    function renderPois() {
+        const found = visiblePois(), loading = state.poiLoading;
+        $('poi-count').textContent = !state.origin ? 'Imposta la partenza per scoprire le mete' :
+            loading && found.length ? `${found.length} mete verificate · altre in arrivo…` :
+                loading ? 'Verifica dei percorsi pedonali…' : state.poiError && !found.length ? 'Percorsi non disponibili' :
+                    `${found.length} mete con distanza pedonale calcolata`;
+        if (!state.origin) {
+            $('poi-list').innerHTML = '<div class="list-empty"><strong>Da dove vuoi partire?</strong>Usa la tua posizione o scegli un punto sulla mappa.</div>';
+            return;
+        }
+        if (loading && !found.length) {
+            $('poi-list').innerHTML = '<div class="list-empty"><strong>Sto verificando le distanze a piedi…</strong></div>';
+            return;
+        }
+        $('poi-list').innerHTML = found.length ? found.map(p => {
+            const steps = verifiedSteps(p);
+            const delta = steps - state.goal;
+            const gap = delta === 0 ? 'Obiettivo esatto' : `${delta > 0 ? '+' : '−'}${fmt(Math.abs(delta))} passi dall’obiettivo`;
+            return `<button type="button" class="poi-card ${state.selected?.id === p.id ? 'selected' : ''}" data-poi="${escapeHTML(p.id)}" aria-pressed="${state.selected?.id === p.id}">
+    <span class="poi-icon ${p.type}">${ICONS[p.type] || '✦'}</span><span class="poi-text"><span class="poi-title">${escapeHTML(p.name)}</span><span class="poi-description">${fmt(steps)} passi A/R · ${kmText(p.walkRoute.km)} km a piedi</span><span class="poi-gap">${gap}</span></span></button>`;
+        }).join('') : state.poiError ? `<div class="list-empty"><strong>Impossibile verificare i percorsi.</strong>${escapeHTML(state.poiErrorMessage || 'Il servizio di routing pedonale non risponde. Premi ↻ per riprovare.')}</div>` :
+            `<div class="list-empty"><strong>Nessun percorso vicino all’obiettivo.</strong>Non ho trovato itinerari pedonali entro il ${settings.matchTolerancePct}% dei passi richiesti. Prova un altro obiettivo oppure premi ↻.</div>`;
+        document.querySelectorAll('[data-poi]').forEach(el => el.addEventListener('click', () => selectPoi(el.dataset.poi)));
+    }
+    function cancelSelectionRoute() { routeSerial++; if (selectionRouteController) {
+        selectionRouteController.abort();
+        selectionRouteController = null;
+    } }
+    function setOrigin(location, label, source) {
+        if (state.walk) {
+            stopWalk(false);
+        }
+        cancelSelectionRoute();
+        if (poiController)
+            poiController.abort();
+        state.origin = location;
+        state.originLabel = label;
+        state.source = source;
+        state.selected = null;
+        state.route = null;
+        state.routeError = '';
+        state.pois = [];
+        state.poiError = false;
+        state.poiPhase = 'search';
+        state.poiProgress = { done: 0, total: 0 };
+        infoSerial++;
+        renderLocation();
+        renderPois();
+        renderRoutePanel();
+        if (map) {
+            map.flyTo({ center: [location.lon, location.lat], zoom: 14, essential: true });
+            renderMap();
+        }
+        fetchPOIs();
+    }
+    function commitPickedOrigin(location){
+        if(!state.picking)return;
+        state.picking=false;
+        renderPickMode();
+        setOrigin(location,'Punto scelto sulla mappa','manual');
+    }
+    function renderPickMode() {
+        if (!map) return;
+        map.getContainer().classList.toggle('pick-mode', state.picking);
+        map.getContainer().tabIndex = state.picking ? 0 : -1;
+        $('pick-location-btn').textContent = state.picking ? '× Annulla selezione' : '⌖ Scegli sulla mappa';
+        renderMapStatus();
+    }
+    function chooseLocation() { state.picking = !state.picking; renderPickMode(); if (state.picking) {
+        map?.resize();
+        document.querySelector('.map-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } }
+    function gpsLocate() {
+        if (!navigator.geolocation) {
+            toast('GPS non supportato da questo browser.');
+            return;
+        }
+        state.locating = true;
+        renderMapStatus();
+        $('geolocate-btn').disabled = true;
+        $('geolocate-btn').textContent = '⌛ Localizzazione…';
+        navigator.geolocation.getCurrentPosition(pos => {
+            state.locating = false;
+            $('geolocate-btn').disabled = false;
+            $('geolocate-btn').textContent = '◎ Usa la mia posizione';
+            setOrigin({ lat: pos.coords.latitude, lon: pos.coords.longitude }, 'La tua posizione attuale', 'gps');
+            toast(`Posizione trovata (precisione circa ${Math.round(pos.coords.accuracy)} m).`);
+        }, err => { state.locating = false; renderMapStatus(); $('geolocate-btn').disabled = false; $('geolocate-btn').textContent = '◎ Usa la mia posizione'; toast(err.code === 1 ? 'Permesso GPS negato. Usa la scelta manuale sulla mappa.' : 'GPS non disponibile. Verifica HTTPS e autorizzazioni.'); }, { enableHighAccuracy: true, timeout: settings.locateTimeoutMs, maximumAge: settings.locateMaxAgeMs });
+    }
+    function poiRadiusMeters() {
+        const targetMeters = state.goal * state.stride / 100;
+        return Math.round(Math.min(settings.searchMaxMeters, Math.max(settings.searchMinMeters, targetMeters / 2 + settings.searchBufferMeters)) / 100) * 100;
+    }
+    function normalizePoiName(name) { return name.toLocaleLowerCase('it').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N}]/gu, ''); }
+    async function getRemoteJSON(url, options = {}, signal, timeoutMs = 10000) {
+        const controller = new AbortController();
+        const abort = () => controller.abort();
+        if (signal?.aborted)
+            controller.abort();
+        else
+            signal?.addEventListener('abort', abort, { once: true });
+        const timer = setTimeout(abort, timeoutMs);
+        try {
+            const response = await fetch(url, { ...options, signal: controller.signal });
+            if (!response.ok)
+                throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        }
+        finally {
+            clearTimeout(timer);
+            signal?.removeEventListener('abort', abort);
+        }
+    }
+    function guessWikiType(name) {
+        return /fontana|fountain|fontaine|brunnen|fuente/i.test(name) ? 'fountain' :
+            /parco|giardino|park|garden|villa comunale/i.test(name) ? 'park' : 'monument';
+    }
+    function parseWikipediaPOIs(pages, origin, outerRadius, lang) {
+        return (Array.isArray(pages) ? pages : []).filter(p => p.ns === 0 || p.ns === undefined).map(p => {
+            if (!p.title || !Number.isFinite(p.lat) || !Number.isFinite(p.lon) || !Number.isFinite(p.pageid))
+                return null;
+            const dest = { id: `wiki-${lang}-${p.pageid}`, name: p.title, type: guessWikiType(p.title), lat: p.lat, lon: p.lon,
+                wiki: `${lang}:${p.title}`, desc: '', weight: 7, source: 'geosearch' };
+            const distance = haversine(origin, dest);
+            return distance > settings.minPoiMeters/1000 && distance < outerRadius / 1000 * (1 + settings.searchSlackPct/100) ? dest : null;
+        }).filter(Boolean);
+    }
+    function searchPoint(origin, km, bearing) {
+        const rad = Math.PI / 180, theta = bearing * rad, d = km / 6371, lat1 = origin.lat * rad, lon1 = origin.lon * rad;
+        const lat2 = Math.asin(Math.sin(lat1) * Math.cos(d) + Math.cos(lat1) * Math.sin(d) * Math.cos(theta));
+        const lon2 = lon1 + Math.atan2(Math.sin(theta) * Math.sin(d) * Math.cos(lat1), Math.cos(d) - Math.sin(lat1) * Math.sin(lat2));
+        return { lat: lat2 / rad, lon: (lon2 / rad + 540) % 360 - 180 };
+    }
+    async function wikiGeoSearch(center, origin, searchRadius, outerRadius, language, signal, limit = 90) {
+        const params = new URLSearchParams({ action: 'query', list: 'geosearch', gscoord: `${center.lat.toFixed(5)}|${center.lon.toFixed(5)}`,
+            gsradius: String(Math.min(10000, Math.max(10, Math.round(searchRadius)))), gslimit: String(limit), format: 'json', origin: '*' });
+        const url = `https://${language}.wikipedia.org/w/api.php?${params}`;
+        const data = await getRemoteJSON(url, {}, signal, settings.wikiTimeoutMs);
+        if (!Array.isArray(data.query?.geosearch))
+            throw new Error('Risposta Wikipedia non valida');
+        return parseWikipediaPOIs(data.query.geosearch, origin, outerRadius, language);
+    }
+    function ringBearings(count, offset = 0) {
+        return Array.from({ length: count }, (_, i) => offset + i * 360 / count);
+    }
+    // Fetch nearby and ring-based Wikipedia destinations.
+    async function fetchWikipediaPOIs(origin, outerRadius, signal, onResults) {
+        const targetKm = state.goal * state.stride / 100000;
+        const radialKm = targetKm / 2;
+        const baseRadius = Math.min(settings.wikiBaseMaxMeters, Math.max(settings.wikiBaseMinMeters, radialKm * 1000 + settings.wikiBaseExtraMeters));
+        let combined = [], completed = 0, errors = 0;
+        const collect = items => { combined = mergePOIs(combined, items); if (items.length)
+            onResults(items); };
+        async function run(center, radius, lang, limit) {
+            if (signal.aborted)
+                return;
+            try {
+                const items = await wikiGeoSearch(center, origin, radius, outerRadius, lang, signal, limit);
+                collect(items);
+                completed++;
+            }
+            catch (err) {
+                if (!signal.aborted) {
+                    errors++;
+                    console.warn('Wikipedia GeoSearch non disponibile:', err);
+                }
+            }
+        }
+        await run(origin, baseRadius, 'it', settings.wikiBaseResultLimit);
+        if (signal.aborted)
+            return [];
+        const angles = ringBearings(radialKm < settings.wikiSmallTargetKm ? settings.wikiSmallDirections : settings.wikiRingDirections);
+        const ringRadius = Math.min(settings.wikiRingMaxMeters, Math.max(settings.wikiRingMinMeters, radialKm * (settings.wikiRingFactorPct*10)));
+        for (let i = 0; i < angles.length; i += settings.wikiRingParallel) {
+            await Promise.all(angles.slice(i, i + settings.wikiRingParallel).map(a => run(searchPoint(origin, radialKm, a), ringRadius, 'it', settings.wikiRingResultLimit)));
+            if (signal.aborted)
+                return [];
+        }
+        const close = combined.filter(p => { const d = haversine(origin, p); return d > targetKm * settings.wikiNearMinPct/100 && d < targetKm * settings.wikiNearMaxPct/100; }).length;
+        if (close < settings.wikiEnglishThreshold) {
+            for (const angle of ringBearings(settings.wikiEnglishDirections, settings.wikiEnglishAngleDeg)) {
+                await run(searchPoint(origin, radialKm, angle), ringRadius, 'en', settings.wikiEnglishResultLimit);
+                if (signal.aborted)
+                    return [];
+                if (combined.filter(p => { const d = haversine(origin, p); return d > targetKm * settings.wikiNearMinPct/100 && d < targetKm * settings.wikiNearMaxPct/100; }).length >= settings.wikiEnglishStop)
+                    break;
+            }
+        }
+        if (completed === 0 && errors)
+            throw new Error('Wikipedia non disponibile');
+        return combined;
+    }
+    // Match names within spatial buckets to avoid repeated full-list scans.
+    function mergePOIs(current, incoming) {
+        const merged = current.map(p => ({ ...p }));
+        const byName = new Map();
+        for (const p of merged) {
+            const key = normalizePoiName(p.name);
+            if (!byName.has(key)) byName.set(key, []);
+            byName.get(key).push(p);
+        }
+        for (const candidate of incoming) {
+            const key = normalizePoiName(candidate.name);
+            const matches = byName.get(key) || [];
+            const found = matches.find(p => haversine(p, candidate) < settings.duplicateMeters / 1000);
+            if (found) {
+                if (!found.wiki?.startsWith('it:') && candidate.wiki?.startsWith('it:'))
+                    found.wiki = candidate.wiki;
+            } else if (merged.length < settings.wikiMergeLimit) {
+                const item = { ...candidate };
+                merged.push(item);
+                if (!byName.has(key)) byName.set(key, []);
+                byName.get(key).push(item);
+            }
+        }
+        return merged;
+    }
+    // Use geometric proximity only to shortlist route candidates.
+    function candidatePool(pois, origin, targetKm) {
+        const maxGeoKm = targetKm / 2 * (1 + settings.matchTolerancePct/100);
+        const buckets = Array.from({ length: settings.geoBands }, () => []);
+        for (const poi of pois) {
+            const distance = haversine(origin, poi);
+            if (distance < settings.minPoiMeters/1000 || distance > maxGeoKm)
+                continue;
+            buckets[Math.min(settings.geoBands-1, Math.floor(distance / maxGeoKm * settings.geoBands))].push(poi);
+        }
+        const pool = [];
+        for (let index = 0; index < settings.maxCandidates;) {
+            let added = false;
+            for (let band = settings.geoBands-1; band >= 0 && index < settings.maxCandidates; band--) {
+                const item = buckets[band].shift();
+                if (item) {
+                    pool.push(item);
+                    index++;
+                    added = true;
+                }
+            }
+            if (!added)
+                break;
+        }
+        return pool;
+    }
+    function routeCacheKey(origin, poi) { return `${origin.lat.toFixed(5)},${origin.lon.toFixed(5)}:${poi.lat.toFixed(5)},${poi.lon.toFixed(5)}`; }
+    async function getMatrix(sources, targets, signal) {
+        const body = { sources: sources.map(p => ({ lat: p.lat, lon: p.lon })), targets: targets.map(p => ({ lat: p.lat, lon: p.lon })), costing: 'pedestrian', units: 'kilometers' };
+        const data = await getRemoteJSON(`${ROUTING_API}/sources_to_targets`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, signal, settings.matrixTimeoutMs);
+        const rows = data?.sources_to_targets;
+        if (!rows)
+            throw new Error('Matrice pedonale non disponibile');
+        return rows;
+    }
+    function matrixDistance(rows, i, j) {
+        const raw = Array.isArray(rows) ? rows[i]?.[j]?.distance : rows?.distances?.[i]?.[j];
+        return raw != null && Number.isFinite(Number(raw)) && Number(raw) > 0 ? Number(raw) : null;
+    }
+    function matrixSeconds(rows, i, j) {
+        const raw = Array.isArray(rows) ? rows[i]?.[j]?.time : rows?.times?.[i]?.[j];
+        return raw != null && Number.isFinite(Number(raw)) && Number(raw) > 0 ? Number(raw) : null;
+    }
+    // Batch one-way pedestrian distances; reverse leg is identical.
+    async function pedestrianMatrix(origin, pois, signal, onBatch) {
+        const valid = [];
+        let next = 0;
+        await Promise.all(Array.from({ length: settings.matrixConcurrency }, async () => {
+            while (!signal.aborted && next < pois.length) {
+                const start = next;
+                next += settings.matrixBatchSize;
+                const batch = pois.slice(start, start + settings.matrixBatchSize);
+                try {
+                    const outward = await getMatrix([origin], batch, signal);
+                    if (signal.aborted)
+                        return;
+                    const part = [];
+                    batch.forEach((poi, i) => {
+                        const km = matrixDistance(outward, 0, i), secs = matrixSeconds(outward, 0, i);
+                        if (km !== null)
+                            part.push({ poi, km: km * 2, minutes: secs !== null ? secs * 2 / 60 : km * 2 / settings.walkingSpeedKmh * 60 });
+                    });
+                    valid.push(...part);
+                    onBatch?.(part);
+                }
+                catch (err) {
+                    if (!signal.aborted)
+                        console.warn('Matrice pedonale non disponibile per un gruppo:', err);
+                }
+            }
+        }));
+        return valid;
+    }
+    // Verify real route geometry before publishing each result.
+    async function fetchPOIs({ force = false } = {}) {
+        if (!state.origin) {
+            renderPois();
+            return;
+        }
+        if (poiController)
+            poiController.abort();
+        const controller = new AbortController();
+        poiController = controller;
+        const signal = controller.signal, origin = { ...state.origin }, radius = poiRadiusMeters();
+        const key = `${origin.lat.toFixed(5)}:${origin.lon.toFixed(5)}:${radius}:${state.goal}:${state.stride}`;
+        const cached = poiCache.get(key);
+        if (!force && cached && Date.now() - cached.at < poiCacheTtlMs()) {
+            state.pois = cached.pois;
+            state.poiSearchRadius = radius;
+            state.poiLoading = false;
+            state.poiError = false;
+            state.poiErrorMessage = '';
+            state.poiPhase = 'ready';
+            renderPois();
+            renderMap();
+            renderMapStatus();
+            return;
+        }
+        state.pois = [];
+        state.poiLoading = true;
+        state.poiError = false;
+        state.poiErrorMessage = '';
+        state.poiPhase = 'search';
+        state.poiProgress = { done: 0, total: 0 };
+        renderPois();
+        renderMap();
+        renderMapStatus();
+        let wikipedia = [], geoFailed = false, routeErrors = 0, validated = 0;
+        try {
+            wikipedia = await fetchWikipediaPOIs(origin, radius, signal, items => {
+                if (!signal.aborted)
+                    wikipedia = mergePOIs(wikipedia, items);
+            });
+        }
+        catch (err) {
+            if (!signal.aborted) {
+                geoFailed = true;
+                console.warn('Wikipedia GeoSearch non disponibile:', err);
+            }
+        }
+        if (signal.aborted || poiController !== controller)
+            return;
+        const targetKm = state.goal * state.stride / 100000;
+        const pool = candidatePool(mergePOIs([], wikipedia), origin, targetKm);
+        state.poiPhase = 'matrix';
+        renderPois();
+        renderMapStatus();
+        let ranked = [];
+        if (pool.length) {
+            ranked = await pedestrianMatrix(origin, pool, signal);
+            if (signal.aborted || poiController !== controller)
+                return;
+        }
+        if (ranked.length) {
+            ranked.sort((a, b) => Math.abs(a.km - targetKm) - Math.abs(b.km - targetKm));
+            const candidates = ranked.slice(0, Math.min(ranked.length, settings.shortlistRoutes));
+            state.poiPhase = 'routes';
+            state.poiProgress = { done: 0, total: candidates.length };
+            renderMapStatus();
+            const confirmed = [];
+            let cursor = 0, seen = 0, routeFailed = 0;
+            await Promise.all(Array.from({ length: settings.routeConcurrency }, async () => {
+                while (!signal.aborted && cursor < candidates.length && confirmed.length < settings.maxVisible) {
+                    const item = candidates[cursor++], poi = item.poi, key = routeCacheKey(origin, poi);
+                    try {
+                        let full = routeCache.get(key);
+                        if (!full) {
+                            const oneWay = await getRoute([origin, poi], signal);
+                            full = buildSamePathRoundtrip(oneWay);
+                            routeCache.set(key, full);
+                        }
+                        if (signal.aborted || poiController !== controller)
+                            return;
+                        if (Math.abs(stepCount(full.km) - state.goal) <= state.goal * (settings.matchTolerancePct/100)) {
+                            confirmed.push({ ...poi, walkRoute: full });
+                            validated++;
+                        }
+                    }
+                    catch (err) {
+                        if (signal.aborted)
+                            return;
+                        routeFailed++;
+                        console.warn('Percorso pedonale non verificato:', poi.name, err);
+                    }
+                    seen++;
+                    state.poiProgress.done = seen;
+                    if (seen === 1 || seen % settings.progressEvery === 0) {
+                        state.pois = confirmed .slice(0, settings.maxVisible);
+                        renderPois();
+                        renderMap();
+                        renderMapStatus();
+                    }
+                }
+            }));
+            if (signal.aborted || poiController !== controller)
+                return;
+            state.pois = confirmed .slice(0, settings.maxVisible);
+            routeErrors += routeFailed;
+        }
+        else if (pool.length) {
+            state.poiPhase = 'routes';
+            state.poiProgress = { done: 0, total: Math.min(settings.fallbackRoutes, pool.length) };
+            renderMapStatus();
+            let cursor = 0;
+            await Promise.all(Array.from({ length: settings.fallbackConcurrency }, async () => {
+                while (!signal.aborted && cursor < Math.min(settings.fallbackRoutes, pool.length)) {
+                    const poi = pool[cursor++];
+                    try {
+                        const key = routeCacheKey(origin, poi);
+                        let route = routeCache.get(key);
+                        if (!route) {
+                            route = buildSamePathRoundtrip(await getRoute([origin, poi], signal));
+                            routeCache.set(key, route);
+                        }
+                        if (signal.aborted)
+                            return;
+                        validated++;
+                        if (Math.abs(stepCount(route.km) - state.goal) <= state.goal * (settings.matchTolerancePct/100)) {
+                            state.pois.push({ ...poi, walkRoute: route });
+                        }
+                    }
+                    catch (err) {
+                        if (!signal.aborted) {
+                            routeErrors++;
+                            console.warn('Percorso non disponibile:', poi.name, err);
+                        }
+                    }
+                    state.poiProgress.done++;
+                    if (state.poiProgress.done % settings.progressEvery === 0) {
+                        renderPois();
+                        renderMapStatus();
+                    }
+                }
+            }));
+        }
+        if (signal.aborted || poiController !== controller)
+            return;
+        state.poiLoading = false;
+        state.poiPhase = 'ready';
+        state.poiSearchRadius = radius;
+        const found = visiblePois();
+        state.poiError = !found.length && (geoFailed || (pool.length > 0 && validated === 0 && routeErrors > 0));
+        state.poiErrorMessage = geoFailed ? 'Wikipedia non risponde. Riprova con ↻.' :
+            state.poiError ? 'Valhalla non ha restituito percorsi pedonali. Premi ↻ per riprovare.' : '';
+        if (found.length) {
+            poiCache.set(key, { at: Date.now(), pois: state.pois });
+        }
+        renderPois();
+        renderMap();
+        renderMapStatus();
+    }
+    function selectPoi(id) {
+        const poi = state.pois.find(p => p.id === id && p.walkRoute);
+        if (!poi)
+            return;
+        state.selected = poi;
+        updateSelectedRoute();
+        renderPois();
+        renderMap();
+        loadInlineDescription(poi);
+        if (window.matchMedia('(max-width: 790px)').matches) {
+            document.querySelector('.map-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+    function closeSelectedRoute() {
+        if (state.walk)
+            return;
+        cancelSelectionRoute();
+        state.selected = null;
+        state.route = null;
+        state.routeError = '';
+        infoSerial++;
+        renderPois();
+        renderMap();
+        renderRoutePanel();
+        renderRouteLayer(false);
+        renderMapStatus();
+    }
+    function setRouteMode(mode) {
+        if (state.walk || !['roundtrip', 'loop'].includes(mode) || state.routeMode === mode)
+            return;
+        state.routeMode = mode;
+        if (state.selected)
+            updateSelectedRoute();
+        else
+            renderRoutePanel();
+    }
+    // Reuse verified routes; search alternatives only for circular mode.
+    async function updateSelectedRoute() {
+        cancelSelectionRoute();
+        if (!state.selected)
+            return;
+        const poi = state.selected, serial = routeSerial;
+        state.routeError = '';
+        if (state.routeMode === 'roundtrip') {
+            const key = routeCacheKey(state.origin, poi);
+            const ready = routeCache.get(key) || (!poi.walkRoute.matrix && poi.walkRoute.coords?.length ? poi.walkRoute : null);
+            if (ready) {
+                poi.walkRoute = ready;
+                state.route = { ...ready, mode: 'roundtrip' };
+                renderPois();
+                renderRoutePanel();
+                renderRouteLayer(true);
+                return;
+            }
+            state.route = null;
+            const controller = new AbortController();
+            selectionRouteController = controller;
+            renderRoutePanel();
+            renderRouteLayer(false);
+            try {
+                const oneWay = await getRoute([state.origin, poi], controller.signal);
+                const full = buildSamePathRoundtrip(oneWay);
+                if (controller.signal.aborted || serial !== routeSerial || state.selected?.id !== poi.id)
+                    return;
+                routeCache.set(key, full);
+                poi.walkRoute = full;
+                state.route = { ...full, mode: 'roundtrip' };
+                renderPois();
+                renderMap();
+            }
+            catch (err) {
+                if (controller.signal.aborted || serial !== routeSerial)
+                    return;
+                console.warn('Percorso diretto non disponibile:', err);
+                state.routeError = 'Non riesco a tracciare il percorso pedonale. Riprova selezionando di nuovo la meta.';
+            }
+            finally {
+                if (serial === routeSerial) {
+                    selectionRouteController = null;
+                    renderRoutePanel();
+                    renderRouteLayer(true);
+                }
+            }
+            return;
+        }
+        const origin = { ...state.origin };
+        const key = `${routeCacheKey(origin, poi)}:${state.goal}:${state.stride}:loop`;
+        // Show a cached loop immediately, without a new loading state or request.
+        if (loopCache.has(key)) {
+            state.route = { ...loopCache.get(key), mode: 'loop' };
+            selectionRouteController = null;
+            renderRoutePanel();
+            renderRouteLayer(true);
+            return;
+        }
+        state.route = null;
+        const controller = new AbortController();
+        selectionRouteController = controller;
+        renderRoutePanel();
+        renderRouteLayer(false);
+        try {
+            const chosen = await findPedestrianLoop(origin, poi, state.goal * state.stride / 100000, controller.signal);
+            if (controller.signal.aborted || serial !== routeSerial || state.selected?.id !== poi.id)
+                return;
+            if (chosen) {
+                loopCache.set(key, chosen);
+                state.route = { ...chosen, mode: 'loop' };
+            } else {
+                state.routeError = 'Nessun anello adatto';
+            }
+        }
+        catch (err) {
+            if (controller.signal.aborted || serial !== routeSerial)
+                return;
+            console.warn('Percorso circolare non disponibile:', err);
+            state.routeError = 'Circolare non disponibile';
+        }
+        finally {
+            if (serial === routeSerial) {
+                selectionRouteController = null;
+                renderRoutePanel();
+                renderRouteLayer(true);
+            }
+        }
+    }
+    // Portal the mobile sheet outside the map's clipped layout.
+    function syncMobileRouteSheet() {
+        const sheet = document.querySelector('.map-bottom');
+        const mobileSelected = !!state.selected && window.matchMedia('(max-width:790px)').matches;
+        const parent = mobileSelected ? document.body : document.querySelector('.map-section');
+        if (sheet.parentElement !== parent) parent.appendChild(sheet);
+    }
+
+    function renderRoutePanel() {
+        const selected = state.selected;
+        $('route-panel-loaded').hidden = !selected;
+        $('route-panel').classList.toggle('has-selection', !!selected);
+        document.querySelector('.map-bottom').classList.toggle('has-selection', !!selected);
+        syncMobileRouteSheet();
+        if (!selected)
+            return;
+        const loop = state.routeMode === 'loop';
+        const loopLoading = loop && !state.route && !state.routeError && !!selectionRouteController;
+        for (const [mode, id] of [['roundtrip', 'mode-roundtrip'], ['loop', 'mode-loop']]) {
+            const btn = $(id), active = state.routeMode === mode;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-pressed', String(active));
+            btn.disabled = !!state.walk;
+        }
+        const loopButton = $('mode-loop');
+        loopButton.classList.toggle('loading', loopLoading);
+        loopButton.classList.toggle('unavailable', loop && !!state.routeError);
+        loopButton.textContent = loop && state.routeError ? '◯ Nessun anello' : '◯ Circolare';
+        loopButton.title = loop && state.routeError ? state.routeError : '';
+        loopButton.setAttribute('aria-label', loopLoading ? 'Calcolo percorso circolare in corso' : loop && state.routeError ? `Percorso circolare: ${state.routeError}` : 'Percorso circolare');
+        loopButton.setAttribute('aria-busy', String(loopLoading));
+        $('route-title').textContent = selected.name;
+        const notice = $('route-notice');
+        notice.textContent = !loop && state.routeError ? state.routeError : '';
+        notice.hidden = !notice.textContent;
+        $('close-route-panel').disabled = !!state.walk;
+        $('route-steps').textContent = state.route ? fmt(stepCount(state.route.km)) : '—';
+        $('route-distance').textContent = state.route ? kmText(state.route.km) : '—';
+        $('route-duration').textContent = state.route ? `${Math.round(state.route.minutes)}` : '—';
+        $('start-walk-btn').disabled = !state.route || Boolean(state.walk);
+        renderMapStatus();
+    }
+    function parseTrip(json) {
+        if (!json?.trip?.legs?.length)
+            throw Error('Il routing non ha restituito un percorso.');
+        const coords = [], legs = [];
+        for (const leg of json.trip.legs) {
+            let ll;
+            if (leg.shape?.type === 'LineString')
+                ll = leg.shape.coordinates.map(([lon, lat]) => [lat, lon]);
+            else if (Array.isArray(leg.shape?.coordinates))
+                ll = leg.shape.coordinates.map(([lon, lat]) => [lat, lon]);
+            else if (typeof leg.shape === 'string')
+                ll = decodePolyline(leg.shape, 6);
+            else
+                throw Error('Formato geometria sconosciuto.');
+            legs.push(ll);
+            for (const p of ll) {
+                if (!coords.length || p[0] !== coords.at(-1)[0] || p[1] !== coords.at(-1)[1])
+                    coords.push(p);
+            }
+        }
+        if (coords.length < 2)
+            throw Error('Geometria percorso vuota.');
+        return { km: json.trip.summary.length, minutes: json.trip.summary.time / 60, coords, legs };
+    }
+    function decodePolyline(encoded, precision) { let index = 0, lat = 0, lng = 0, out = [], fac = 10 ** precision; while (index < encoded.length) {
+        let result = 0, shift = 0, b;
+        do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 31) << shift;
+            shift += 5;
+        } while (b >= 32 && index < encoded.length);
+        lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+        result = 0;
+        shift = 0;
+        do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 31) << shift;
+            shift += 5;
+        } while (b >= 32 && index < encoded.length);
+        lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+        out.push([lat / fac, lng / fac]);
+    } return out; }
+    async function getRoute(stops, signal) {
+        const body = { locations: stops.map(p => ({ lat: p.lat, lon: p.lon, ...(['through', 'break_through'].includes(p.type) ? { type: p.type } : {}) })), costing: 'pedestrian', units: 'kilometers', shape_format: 'geojson', directions_type: 'none' };
+        const data = await getRemoteJSON(`${ROUTING_API}/route`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, signal, settings.routeTimeoutMs);
+        return parseTrip(data);
+    }
+    // Reverse the outbound polyline instead of requesting a second route.
+    function buildSamePathRoundtrip(outbound) {
+        const there = outbound.coords || [];
+        if (there.length < 2)
+            throw Error('Tracciato pedonale vuoto.');
+        const back = [...there].reverse();
+        return { km: outbound.km * 2, minutes: outbound.minutes * 2,
+            coords: [...there, ...back.slice(1)], legs: [there, back] };
+    }
+    function sampledPolyline(points, spacing = settings.sampleMeters) {
+        const out = [];
+        if (!points?.length)
+            return out;
+        out.push(points[0]);
+        for (let i = 1; i < points.length; i++) {
+            const a = points[i - 1], b = points[i], length = haversine({ lat: a[0], lon: a[1] }, { lat: b[0], lon: b[1] }) * 1000;
+            for (let m = spacing; m < length; m += spacing) {
+                const t = m / length;
+                out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+            }
+            out.push(b);
+        }
+        return out;
+    }
+    // Estimate return-path overlap using sampled points and a grid.
+    function loopRetracedFraction(route, origin, poi) {
+        if (!route.legs || route.legs.length !== 2)
+            return 1;
+        const [out, back] = route.legs.map(x => sampledPolyline(x));
+        const lat0 = origin.lat * Math.PI / 180, scaleX = 111320 * Math.cos(lat0), scaleY = 111320;
+        const toXY = point => [(point[1] - origin.lon) * scaleX, (point[0] - origin.lat) * scaleY];
+        const squares = new Set(), cell = settings.overlapGridMeters;
+        for (const p of out) {
+            const [x, y] = toXY(p);
+            squares.add(`${Math.round(x / cell)},${Math.round(y / cell)}`);
+        }
+        let shared = 0, total = 0;
+        for (const p of back) {
+            const point = { lat: p[0], lon: p[1] };
+            if (haversine(point, origin) < settings.endpointIgnoreMeters/1000 || haversine(point, poi) < settings.endpointIgnoreMeters/1000)
+                continue;
+            const [x, y] = toXY(p), cx = Math.round(x / cell), cy = Math.round(y / cell);
+            total++;
+            if ([-1, 0, 1].some(dx => [-1, 0, 1].some(dy => squares.has(`${cx + dx},${cy + dy}`))))
+                shared++;
+        }
+        return total ? shared / total : 1;
+    }
+    function loopWaypoint(origin, poi, t, side, offsetKm) {
+        const deltaLat = poi.lat - origin.lat, deltaLon = (poi.lon - origin.lon) * Math.cos(origin.lat * Math.PI / 180);
+        const length = Math.hypot(deltaLat, deltaLon), perpLat = -deltaLon / length, perpLon = deltaLat / length;
+        const centerLat = origin.lat + deltaLat * t, centerLon = origin.lon + (poi.lon - origin.lon) * t;
+        const deltaDegrees = offsetKm / 111.32;
+        return { lat: centerLat + perpLat * side * deltaDegrees, lon: centerLon + perpLon * side * deltaDegrees / Math.cos(centerLat * Math.PI / 180), type: 'through' };
+    }
+    // Score up to six waypoints by distance error and route overlap.
+    async function findPedestrianLoop(origin, poi, targetKm, signal) {
+        const straightKm = haversine(origin, poi);
+        if (straightKm < settings.minPoiMeters/1000)
+            return null;
+        const offset = Math.max(settings.loopMinOffsetKm, Math.min(settings.loopMaxOffsetKm, straightKm * settings.loopOffsetPct/100));
+        const candidates = [
+            loopWaypoint(origin, poi, settings.loopMiddlePointPct/100, 1, offset),
+            loopWaypoint(origin, poi, settings.loopMiddlePointPct/100, -1, offset),
+            loopWaypoint(origin, poi, settings.loopEarlyPointPct/100, 1, offset * settings.loopInnerFactor),
+            loopWaypoint(origin, poi, settings.loopLatePointPct/100, -1, offset * settings.loopInnerFactor),
+            loopWaypoint(origin, poi, settings.loopLatePointPct/100, 1, offset * settings.loopOuterFactor),
+            loopWaypoint(origin, poi, settings.loopEarlyPointPct/100, -1, offset * settings.loopOuterFactor)
+        ] .slice(0, settings.loopAttempts);
+        let best = null, score = Infinity;
+        for (const via of candidates) {
+            if (signal.aborted)
+                break;
+            try {
+                const route = await getRoute([origin, { ...poi, type: 'break_through' }, via, origin], signal);
+            const deviation = Math.abs(route.km - targetKm) / targetKm;
+                if (deviation > settings.matchTolerancePct/100)
+                    continue;
+                const overlap = loopRetracedFraction(route, origin, poi);
+                if (overlap > settings.maxOverlapPct/100)
+                    continue;
+            const candidateScore = deviation + overlap * settings.overlapWeight;
+                if (candidateScore < score) {
+                    score = candidateScore;
+                    best = { ...route, overlap };
+                }
+                if (deviation < settings.loopEarlyDistancePct/100 && overlap < settings.loopEarlyOverlapPct/100)
+                    break;
+            }
+            catch (err) {
+                if (signal.aborted)
+                    break;
+                console.warn('Variante circolare scartata:', err);
+            }
+        }
+        return best;
+    }
+    function wikipediaImageURL(raw) {
+        try {
+            const u = new URL(raw);
+            return u.protocol === 'https:' &&
+                (u.hostname === 'upload.wikimedia.org' || u.hostname.endsWith('.wikimedia.org')) ? u.href : null;
+        }
+        catch {
+            return null;
+        }
+    }
+    function showArticlePhoto(record, poi, serial, articleURL) {
+        const frame = $('route-place-photo'), img = $('route-place-image'), credit = $('route-photo-credit');
+        frame.hidden = true;
+        img.removeAttribute('src');
+        if (!record?.image)
+            return;
+        img.onload = () => { if (serial === infoSerial && state.selected?.id === poi.id)
+            frame.hidden = false; };
+        img.onerror = () => { if (serial === infoSerial)
+            frame.hidden = true; };
+        img.alt = `Fotografia di ${poi.name}`;
+        credit.href = articleURL;
+        credit.textContent = 'ⓘ';
+        credit.title = 'Crediti e licenza · Wikipedia';
+        img.src = record.image;
+        if (record.file)
+            loadImageCredit(record.file, credit, serial, poi.id);
+    }
+    async function loadImageCredit(file, credit, serial, poiId) {
+        if (photoCreditCache.has(file)) {
+            const c = photoCreditCache.get(file);
+            if (c && serial === infoSerial && state.selected?.id === poiId) {
+                credit.textContent = 'ⓘ';
+                credit.title = c.label;
+                credit.href = c.url;
+            }
+            return;
+        }
+        try {
+            const params = new URLSearchParams({ action: 'query', prop: 'imageinfo', iiprop: 'url|extmetadata', titles: file,
+                format: 'json', formatversion: '2', origin: '*' });
+            const json = await getRemoteJSON(`https://commons.wikimedia.org/w/api.php?${params}`, {}, null, settings.commonsTimeoutMs);
+            const info = json.query?.pages?.[0]?.imageinfo?.[0];
+            if (!info)
+                return;
+            const metadata = info.extmetadata || {};
+            const toPlain = raw => new DOMParser().parseFromString(String(raw || ''), 'text/html').body.textContent.replace(/\s+/g, ' ').trim();
+            const author = toPlain(metadata.Artist?.value || metadata.Credit?.value).slice(0, 65);
+            const licence = toPlain(metadata.LicenseShortName?.value || '').slice(0, 40);
+            const label = [author ? `Foto: ${author}` : 'Foto: Wikimedia Commons', licence].filter(Boolean).join(' · ');
+            const url = info.descriptionurl || `https://commons.wikimedia.org/wiki/${encodeURIComponent(file.replace(/ /g, '_'))}`;
+            const result = { label, url };
+            photoCreditCache.set(file, result);
+            if (serial !== infoSerial || state.selected?.id !== poiId)
+                return;
+            credit.textContent = 'ⓘ';
+            credit.title = label;
+            credit.href = url;
+        }
+        catch (err) {
+            console.warn('Crediti immagine non disponibili:', err);
+        }
+    }
+    async function loadInlineDescription(poi) {
+        const serial = ++infoSerial;
+        const description = $('route-place-description'), link = $('route-place-link');
+        $('route-place-photo').hidden = true;
+        $('route-place-image').removeAttribute('src');
+        description.textContent = 'Caricamento informazioni…';
+        link.hidden = true;
+        const wiki = poi.wiki || '';
+        const split = wiki.indexOf(':');
+        const lang = split > 0 ? wiki.slice(0, split) : 'it';
+        const title = split > 0 ? wiki.slice(split + 1) : poi.name;
+        if (!['it', 'en'].includes(lang)) {
+            description.textContent = 'Informazioni non disponibili.';
+            return;
+        }
+        const articleURL = `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, '_'))}`;
+        link.href = articleURL;
+        link.hidden = false;
+        const key = `${lang}:${title}`;
+        if (articleCache.has(key)) {
+            const entry = articleCache.get(key);
+            description.textContent = entry.extract || 'Descrizione non disponibile: apri l’articolo su Wikipedia.';
+            showArticlePhoto(entry, poi, serial, articleURL);
+            return;
+        }
+        try {
+            const params = new URLSearchParams({ action: 'query', prop: 'extracts|pageimages', exintro: '1', explaintext: '1',
+                exchars: String(settings.wikiExcerptChars), piprop: 'thumbnail|name', pithumbsize: String(settings.wikiPhotoWidth), pilicense: 'free', titles: title,
+                format: 'json', formatversion: '2', origin: '*' });
+            const json = await getRemoteJSON(`https://${lang}.wikipedia.org/w/api.php?${params}`, {}, null, settings.wikiTimeoutMs);
+            const page = json.query?.pages?.[0] || {};
+            const entry = { extract: page.extract?.trim() || '', image: wikipediaImageURL(page.thumbnail?.source),
+                file: page.pageimage ? `File:${page.pageimage}` : null };
+            articleCache.set(key, entry);
+            if (serial !== infoSerial || state.selected?.id !== poi.id)
+                return;
+            description.textContent = entry.extract || 'Descrizione non disponibile: apri l’articolo su Wikipedia.';
+            showArticlePhoto(entry, poi, serial, articleURL);
+        }
+        catch (err) {
+            if (serial !== infoSerial || state.selected?.id !== poi.id)
+                return;
+            console.warn('Informazioni Wikipedia non disponibili:', err);
+            description.textContent = 'Informazioni temporaneamente non disponibili. Puoi aprire l’articolo su Wikipedia.';
+        }
+    }
+    // Filter GPS jitter and verify visit, return and step thresholds.
+    function distanceWalkingUpdate(pos) {
+        if (!state.walk)
+            return;
+        const w = state.walk;
+        const c = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        if (pos.coords.accuracy > settings.gpsMaxAccuracyMeters)
+            return;
+        if (w.previous) {
+            const km = haversine(w.previous, c), m = km * 1000;
+            if (m >= settings.gpsMinSegmentMeters && m < settings.gpsMaxSegmentMeters) {
+                w.meters += m;
+                w.previous = c;
+            }
+        }
+        else
+            w.previous = c;
+        if (haversine(c, state.selected) < settings.visitRadiusMeters / 1000)
+            w.visitedDestination = true;
+        w.current = c;
+        updateWalkUI();
+        if (w.visitedDestination && w.meters >= state.goal * state.stride / 100 * settings.completionGoalPct / 100 && haversine(c, state.origin) < settings.returnRadiusMeters / 1000)
+            completeWalk();
+    }
+    function startWalk() {
+        if (!state.route || !state.selected || state.walk)
+            return;
+        if (state.source !== 'gps') {
+            toast('Per registrare una camminata, utilizza il GPS come punto di partenza.');
+            return;
+        }
+        if (!navigator.geolocation) {
+            toast('Il browser non supporta il tracciamento GPS.');
+            return;
+        }
+        const walk = { meters: 0, previous: null, visitedDestination: false, watchId: null, poi: { ...state.selected }, routeKm: state.route.km, started: Date.now() };
+        try {
+            walk.watchId = navigator.geolocation.watchPosition(distanceWalkingUpdate, err => toast('Problema GPS: ' + err.message), { enableHighAccuracy: true, maximumAge: settings.watchMaxAgeMs, timeout: settings.watchTimeoutMs });
+            state.walk = walk;
+            updateWalkUI();
+            renderRoutePanel();
+            toast('Camminata avviata. Mantieni il sito aperto durante il tragitto.');
+        }
+        catch {
+            toast('Non è stato possibile avviare il GPS.');
+        }
+    }
+    function updateWalkUI() {
+        const w = state.walk;
+        const el = $('walk-progress');
+        el.hidden = !w;
+        if (!w)
+            return;
+        const count = Math.round(w.meters / (state.stride / 100));
+        $('walk-mode').textContent = '● GPS · CAMMINATA IN CORSO';
+        $('walk-steps').textContent = fmt(count);
+        $('walk-goal').textContent = fmt(state.goal);
+        $('walk-bar').style.width = `${Math.min(100, count / state.goal * 100)}%`;
+        $('walk-message').textContent = w.visitedDestination ? 'Destinazione raggiunta! Torna al punto di partenza per completare la missione.' : 'Raggiungi la meta e torna alla partenza. Le distanze GPS sono approssimative.';
+    }
+    function stopWalk(notify = true) {
+        const w = state.walk;
+        if (!w)
+            return;
+        if (w.watchId != null)
+            navigator.geolocation.clearWatch(w.watchId);
+        state.walk = null;
+        updateWalkUI();
+        renderRoutePanel();
+        if (notify)
+            toast('Camminata interrotta: il traguardo non è stato registrato.');
+    }
+    function completeWalk() {
+        const w = state.walk;
+        if (!w)
+            return;
+        const distance = w.meters / 1000;
+        const record = { date: new Date().toISOString(), name: w.poi.name, id: w.poi.id, city: 'Area esplorata', type: w.poi.type, km: Math.round(distance * 100) / 100, steps: stepCount(distance), xp: settings.earnedXp };
+        state.profile.xp += settings.earnedXp;
+        state.profile.history.unshift(record);
+        state.profile.history = state.profile.history.slice(0, settings.historyLimit);
+        saveProfile();
+        stopWalk(false);
+        renderProfile();
+        renderBadges();
+        toast(`Missione completata! +${settings.earnedXp} XP · ${fmt(record.steps)} passi stimati.`);
+        switchView('challenges');
+    }
+    // Gamification thresholds are adjustable; stored history remains intact.
+    const BADGES = [
+        { id: 'first', emoji: '🏁', name: 'First 10K', description: 'Completa la tua prima esplorazione reale.', xp: () => `+${settings.earnedXp} XP`, done: p => p.history.length >= 1 },
+        { id: 'urban', emoji: '🏛️', name: 'Urban Explorer', description: () => `Visita ${settings.badgeUrbanCount} luoghi diversi della città.`, xp: () => `${settings.badgeUrbanCount} LUOGHI`, done: p => new Set(p.history.map(h => h.id)).size >= settings.badgeUrbanCount },
+        { id: 'steps', emoji: '👟', name: () => settings.badgeTotalSteps === 100000 ? '100K Club' : `${fmt(settings.badgeTotalSteps)} Steps Club`, description: () => `Accumula almeno ${fmt(settings.badgeTotalSteps)} passi stimati.`, xp: () => `${fmt(settings.badgeTotalSteps)} PASSI`, done: p => p.history.reduce((a, h) => a + h.steps, 0) >= settings.badgeTotalSteps },
+        { id: 'streak', emoji: '🔥', name: () => `${settings.badgeStreakDays}-Day Streak`, description: () => `Esplora per ${settings.badgeStreakDays} giorni consecutivi.`, xp: () => `${settings.badgeStreakDays} GIORNI`, done: p => streak(p.history) >= settings.badgeStreakDays },
+        { id: 'fountain', emoji: '⛲', name: 'Fountain Hunter', description: () => `Raggiungi ${settings.badgeFountainCount} fontane diverse.`, xp: () => `${settings.badgeFountainCount} FONTANE`, done: p => new Set(p.history.filter(h => h.type === 'fountain').map(h => h.id)).size >= settings.badgeFountainCount },
+        { id: 'distance', emoji: '🌍', name: 'The Long Walk', description: () => `Percorri ${settings.badgeTotalKm} km complessivi.`, xp: () => `${settings.badgeTotalKm} KM`, done: p => p.history.reduce((a, h) => a + h.km, 0) >= settings.badgeTotalKm }
+    ];
+    function streak(history) {
+        const days = new Set(history.map(x => x.date.slice(0, 10)));
+        let best = 0, curr = 0, prev = null;
+        for (let day of [...days].sort()) {
+            const val = Date.parse(day + 'T00:00:00Z');
+            curr = prev !== null && val - prev === 86400000 ? curr + 1 : 1;
+            best = Math.max(best, curr);
+            prev = val;
+        }
+        return best;
+    }
+    function renderBadges() { const p = state.profile; $('badge-grid').innerHTML = BADGES.map(b => { const unlocked = b.done(p); return `<div class="badge-card ${unlocked ? '' : 'locked'}"><div class="badge-top"><span class="badge-emoji">${b.emoji}</span><span class="badge-status">${unlocked ? '✓ SBLOCCATO' : '◈ BLOCCATO'}</span></div><h3>${typeof b.name === 'function' ? b.name() : b.name}</h3><p>${typeof b.description === 'function' ? b.description() : b.description}</p><small>${typeof b.xp === 'function' ? b.xp() : b.xp}</small></div>`; }).join(''); }
+    function renderProfile() {
+        const p = state.profile;
+        $('top-xp').textContent = fmt(p.xp);
+        $('challenge-xp').textContent = `${fmt(p.xp)} XP`;
+        $('challenge-walks').textContent = fmt(p.history.length);
+        const km = p.history.reduce((s, h) => s + h.km, 0);
+        $('challenge-meters').textContent = km >= 1 ? `${kmText(km)} km` : `${fmt(km * 1000)} m`;
+        const level = Math.floor(p.xp / settings.levelXp) + 1;
+        $('profile-level').textContent = `Livello ${level} · ${level >= 5 ? 'Leggenda urbana' : level >= 3 ? 'Esploratore esperto' : level >= 2 ? 'Camminatore curioso' : 'Esordiente'}`;
+        $('profile-xp').textContent = `${fmt(p.xp)} XP`;
+        $('profile-hint').textContent = `${Math.max(0, level * settings.levelXp - p.xp)} XP al prossimo livello · ${p.history.length} avventure completate`;
+        $('history-list').innerHTML = p.history.length ? p.history.map(h => `<div class="history-item"><div class="history-icon">${ICONS[h.type] || '✦'}</div><div><h3>${escapeHTML(h.name)}</h3><p>${escapeHTML(h.city)} · ${new Date(h.date).toLocaleDateString('it-IT')} · ${kmText(h.km)} km · ${fmt(h.steps)} passi</p></div><strong>+${h.xp} XP</strong></div>`).join('') : '<div class="history-empty">Ancora nessuna esplorazione registrata. La tua prima avventura ti aspetta!</div>';
+    }
+    function switchView(name) {
+        state.view = name;
+        document.querySelectorAll('.view').forEach(el => { const active = el.id === `view-${name}`; el.hidden = !active; el.classList.toggle('active', active); });
+        document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+        if (name === 'explore')
+            setTimeout(() => map?.resize(), 80);
+        if (window.matchMedia('(max-width: 790px)').matches)
+            window.scrollTo(0, 0);
+        if (name === 'challenges') {
+            renderBadges();
+            renderProfile();
+        }
+        if (name === 'profile')
+            renderProfile();
+    }
+    // Bind controls and initialize the single-file application.
+    function wire() {
+        document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => switchView(b.dataset.view)));
+        $('goal-slider').addEventListener('input', e => { state.goal = +e.target.value; renderGoal(); renderPois(); renderMap(); });
+        $('goal-slider').addEventListener('change', () => { if (!state.origin)
+            return; state.selected = null; state.route = null; state.routeError = ''; cancelSelectionRoute(); infoSerial++; renderRoutePanel(); renderRouteLayer(false); fetchPOIs(); });
+        $('stride-input').addEventListener('change', e => {
+            const value = Number(e.target.value);
+            state.stride = Number.isFinite(value) && value > 0 ? Math.min(120, Math.max(40, Math.round(value))) : 75;
+            try {
+                localStorage.setItem(STRIDE_KEY, String(state.stride));
+            }
+            catch { }
+            state.selected = null;
+            state.route = null;
+            state.routeError = '';
+            cancelSelectionRoute();
+            infoSerial++;
+            renderGoal();
+            renderPois();
+            renderMap();
+            renderRoutePanel();
+            if (state.origin)
+                fetchPOIs();
+        });
+        $('advanced-form').addEventListener('submit', event => {
+            event.preventDefault();
+            try { const values=readAdvancedForm();$('advanced-error').hidden=true;applyAdvanced(values); }
+            catch(err){$('advanced-error').textContent=err.message;$('advanced-error').hidden=false;}
+        });
+        $('advanced-reset').addEventListener('click',()=>{
+            const values=defaultsAdvanced();
+            applyAdvanced(values);
+            renderAdvancedFields();
+            $('advanced-error').hidden=true;
+        });
+        $('geolocate-btn').addEventListener('click', gpsLocate);
+        $('pick-location-btn').addEventListener('click', chooseLocation);
+        window.addEventListener('resize', syncMobileRouteSheet);
+        $('map-reset-btn').addEventListener('click', () => { if (!map)
+            return; if (state.route?.coords?.length)
+            renderRouteLayer(true);
+        else if (state.origin)
+            map.flyTo({ center: [state.origin.lon, state.origin.lat], zoom: 14 });
+        else
+            map.flyTo({ center: [12, 43], zoom: 4.2 }); });
+        $('map-refresh-btn').addEventListener('click', () => { if (!state.origin) {
+            toast('Imposta prima il punto di partenza.');
+            return;
+        } fetchPOIs({ force: true }); toast('Aggiornamento luoghi avviato…'); });
+        $('close-route-panel').addEventListener('click', closeSelectedRoute);
+        $('mode-roundtrip').addEventListener('click', () => setRouteMode('roundtrip'));
+        $('mode-loop').addEventListener('click', () => setRouteMode('loop'));
+        $('start-walk-btn').addEventListener('click', startWalk);
+        $('stop-walk-btn').addEventListener('click', () => stopWalk(true));
+        $('reset-profile-btn').addEventListener('click', () => { if (!window.confirm('Vuoi eliminare definitivamente i tuoi progressi salvati in questo browser?'))
+            return; state.profile = { xp: 0, history: [] }; saveProfile(); renderProfile(); renderBadges(); toast('Progressi locali azzerati.'); });
+    }
+    function init() { renderAdvancedFields(); wire(); renderGoal(); renderLocation(); renderPois(); renderRoutePanel(); renderProfile(); renderBadges(); initMap(); }
+    init();
+})();
+</script>
+</body>
+</html>
